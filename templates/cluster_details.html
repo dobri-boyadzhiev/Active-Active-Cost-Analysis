@@ -1,0 +1,672 @@
+{% extends "base.html" %}
+
+{% block title %}Cluster {{ mc_uid }} - AA Report{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/top-savings">Savings</a></li>
+                <li class="breadcrumb-item active">Cluster: {{ mc_uid }}</li>
+            </ol>
+        </nav>
+        <h1 class="h2 mb-2">
+            <i class="bi bi-server"></i> Cluster: <code>{{ mc_uid }}</code>
+        </h1>
+        <p class="text-muted mb-0" style="font-size: 0.95rem;">
+            Latest data from: {{ latest_result.run_timestamp[:10] }} |
+            Ticket: <a href="https://redislabs.atlassian.net/browse/{{ latest_result.jira_ticket }}" target="_blank">{{ latest_result.jira_ticket }}</a>
+        </p>
+    </div>
+</div>
+
+<!-- Quick Stats Badges -->
+{% if metadata %}
+<div class="row mb-3">
+    <div class="col">
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-primary p-2">
+                <i class="bi bi-hdd"></i> Total Instances: {{ total_current_instances }}
+            </span>
+            <span class="badge bg-info p-2">
+                <i class="bi bi-geo-alt"></i> {{ metadata.region }}
+            </span>
+            <span class="badge bg-success p-2">
+                <i class="bi bi-database"></i> Redis {{ metadata.redis_version }}
+            </span>
+            <span class="badge bg-warning text-dark p-2">
+                <i class="bi bi-cloud"></i> {{ metadata.cloud_provider }}
+            </span>
+            {% if metadata.multi_az %}
+            <span class="badge bg-danger p-2">
+                <i class="bi bi-shield-check"></i> Multi-AZ
+            </span>
+            {% endif %}
+            <span class="badge bg-secondary p-2">
+                <i class="bi bi-hdd-stack"></i> {{ metadata.storage_type }}
+            </span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Enhanced Savings Summary -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h5><i class="bi bi-piggy-bank"></i> Monthly Savings</h5>
+                <h2><strong>${{ "{:,.2f}".format(latest_result.total_savings) }}</strong></h2>
+                <p class="mb-0">{{ "{:.1f}".format(latest_result.savings_percent) }}% reduction</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5><i class="bi bi-calendar-check"></i> Annual Savings</h5>
+                <h2><strong>${{ "{:,.2f}".format(latest_result.total_savings * 12) }}</strong></h2>
+                <p class="mb-0">Projected yearly impact</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5><i class="bi bi-graph-up"></i> ROI Timeline</h5>
+                <h2><strong>Immediate</strong></h2>
+                <p class="mb-0">No migration cost</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cluster Metadata -->
+{% if metadata %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="bi bi-info-circle"></i> Cluster Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Cluster Name:</th>
+                                <td><code>{{ metadata.cluster_name or 'N/A' }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Cloud Provider:</th>
+                                <td>
+                                    <span class="badge bg-primary">{{ metadata.cloud_provider or 'N/A' }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Region:</th>
+                                <td><code>{{ metadata.region or 'N/A' }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Redis Version:</th>
+                                <td><span class="badge bg-success">{{ metadata.redis_version or 'N/A' }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Multi-AZ:</th>
+                                <td>
+                                    {% if metadata.multi_az %}
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Enabled</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Disabled</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Availability Zones:</th>
+                                <td><small>{{ metadata.availability_zones or 'N/A' }}</small></td>
+                            </tr>
+                            <tr>
+                                <th>Storage Type:</th>
+                                <td><code>{{ metadata.storage_type or 'N/A' }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Created:</th>
+                                <td>
+                                    {% if metadata.created_at %}
+                                    <small>{{ metadata.created_at[:10] }}</small>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Last Updated:</th>
+                                <td>
+                                    {% if metadata.last_updated %}
+                                    <small>{{ metadata.last_updated[:10] }}</small>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Savings Breakdown -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-pie-chart"></i> Current Cost Breakdown</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="currentCostChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-pie-chart"></i> Optimal Cost Breakdown</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="optimalCostChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current vs Optimal Comparison -->
+<div class="row mb-4">
+    <!-- Current Configuration -->
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-box"></i> Current Configuration</h4>
+            </div>
+            <div class="card-body">
+                {% for cluster in current_clusters %}
+                <h5 class="text-muted">Cluster: <code>{{ cluster.uid }}</code></h5>
+                
+                <h6 class="mt-3">Infrastructure:</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Instance Type</th>
+                            <th class="text-end">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for instance_type, count in cluster.infra.items() %}
+                        <tr>
+                            <td><code>{{ instance_type }}</code></td>
+                            <td class="text-end">{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <h6 class="mt-3">Pricing:</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td>Instance Cost:</td>
+                        <td class="text-end">${{ "{:,.2f}".format(cluster.instance_price) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Storage Cost:</td>
+                        <td class="text-end">${{ "{:,.2f}".format(cluster.storage_price) }}</td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Total:</td>
+                        <td class="text-end text-danger">${{ "{:,.2f}".format(cluster.total_price) }}</td>
+                    </tr>
+                </table>
+                
+                {% if not loop.last %}<hr>{% endif %}
+                {% endfor %}
+                
+                <!-- Total for all current clusters -->
+                {% set total_current = current_clusters | sum(attribute='total_price') %}
+                <div class="alert alert-danger mt-3">
+                    <strong>Total Current Cost: ${{ "{:,.2f}".format(total_current) }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Optimal Configuration -->
+    <div class="col-md-6">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-box-seam"></i> Optimal Configuration</h4>
+            </div>
+            <div class="card-body">
+                {% for cluster in optimal_clusters %}
+                <h5 class="text-muted">Cluster: <code>{{ cluster.uid }}</code></h5>
+                
+                <h6 class="mt-3">Infrastructure:</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Instance Type</th>
+                            <th class="text-end">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for instance_type, count in cluster.infra.items() %}
+                        <tr>
+                            <td><code>{{ instance_type }}</code></td>
+                            <td class="text-end">{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <h6 class="mt-3">Pricing:</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td>Instance Cost:</td>
+                        <td class="text-end">${{ "{:,.2f}".format(cluster.instance_price) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Storage Cost:</td>
+                        <td class="text-end">${{ "{:,.2f}".format(cluster.storage_price) }}</td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Total:</td>
+                        <td class="text-end text-success">${{ "{:,.2f}".format(cluster.total_price) }}</td>
+                    </tr>
+                </table>
+                
+                {% if not loop.last %}<hr>{% endif %}
+                {% endfor %}
+                
+                <!-- Total for all optimal clusters -->
+                {% set total_optimal = optimal_clusters | sum(attribute='total_price') %}
+                <div class="alert alert-success mt-3">
+                    <strong>Total Optimal Cost: ${{ "{:,.2f}".format(total_optimal) }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Instance Type Comparison -->
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0"><i class="bi bi-cpu"></i> Instance Type Changes</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Single Cluster</th>
+                                <th>Current Instance</th>
+                                <th>Count</th>
+                                <th class="text-center">→</th>
+                                <th>Optimal Instance</th>
+                                <th>Count</th>
+                                <th class="text-end">Savings</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for current in current_clusters %}
+                            {% set optimal = optimal_clusters[loop.index0] %}
+                            <tr>
+                                <td><code>{{ current.uid }}</code></td>
+                                <td>
+                                    {% for instance_type, count in current.infra.items() %}
+                                    <code>{{ instance_type }}</code>{% if not loop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% for instance_type, count in current.infra.items() %}
+                                    {{ count }}{% if not loop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td class="text-center"><i class="bi bi-arrow-right text-primary"></i></td>
+                                <td>
+                                    {% for instance_type, count in optimal.infra.items() %}
+                                    <code>{{ instance_type }}</code>{% if not loop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% for instance_type, count in optimal.infra.items() %}
+                                    {{ count }}{% if not loop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-success">
+                                        ${{ "{:,.2f}".format(current.total_price - optimal.total_price) }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Optimization Recommendations -->
+<div class="row mb-4">
+    <div class="col">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-lightbulb"></i> Optimization Recommendations</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% if latest_result.savings_percent > 30 %}
+                    <li class="list-group-item">
+                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                        <strong>High Savings Potential:</strong> This cluster can save over 30% - consider prioritizing optimization.
+                    </li>
+                    {% endif %}
+
+                    {% if latest_result.savings_percent > 20 and latest_result.savings_percent <= 30 %}
+                    <li class="list-group-item">
+                        <i class="bi bi-info-circle text-info"></i>
+                        <strong>Moderate Savings:</strong> This cluster has good optimization potential ({{ "{:.1f}".format(latest_result.savings_percent) }}%).
+                    </li>
+                    {% endif %}
+
+                    {% if storage_savings > 0 %}
+                    <li class="list-group-item">
+                        <i class="bi bi-hdd text-success"></i>
+                        <strong>Storage Optimization:</strong> Potential storage savings of ${{ "{:,.2f}".format(storage_savings) }}/month.
+                    </li>
+                    {% endif %}
+
+                    {% if instance_savings > 0 %}
+                    <li class="list-group-item">
+                        <i class="bi bi-cpu text-primary"></i>
+                        <strong>Instance Optimization:</strong> Potential instance savings of ${{ "{:,.2f}".format(instance_savings) }}/month.
+                    </li>
+                    {% endif %}
+
+                    <li class="list-group-item">
+                        <i class="bi bi-calendar-check text-info"></i>
+                        <strong>Annual Impact:</strong> Implementing these changes would save ${{ "{:,.2f}".format(latest_result.total_savings * 12) }} per year.
+                    </li>
+
+                    {% if total_current_instances != total_optimal_instances %}
+                    <li class="list-group-item">
+                        <i class="bi bi-arrow-down-up text-warning"></i>
+                        <strong>Instance Count Change:</strong> {{ total_current_instances }} → {{ total_optimal_instances }} instances
+                        ({{ "+" if total_optimal_instances > total_current_instances else "" }}{{ total_optimal_instances - total_current_instances }})
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historical Trend -->
+{% if history %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-graph-up"></i> Historical Savings Trend</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="historyChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History Table -->
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0"><i class="bi bi-clock-history"></i> Historical Data</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Jira Ticket</th>
+                                <th class="text-end">Current Price</th>
+                                <th class="text-end">Optimal Price</th>
+                                <th class="text-end">Savings</th>
+                                <th class="text-end">Savings %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in history | reverse %}
+                            <tr>
+                                <td>{{ record.timestamp[:10] }}</td>
+                                <td>
+                                    <a href="https://redislabs.atlassian.net/browse/{{ record.jira_ticket }}" target="_blank">
+                                        {{ record.jira_ticket }}
+                                    </a>
+                                </td>
+                                <td class="text-end">${{ "{:,.2f}".format(record.current_price) }}</td>
+                                <td class="text-end">${{ "{:,.2f}".format(record.optimal_price) }}</td>
+                                <td class="text-end text-success fw-bold">${{ "{:,.2f}".format(record.savings) }}</td>
+                                <td class="text-end">
+                                    <span class="badge bg-success">{{ "{:.1f}".format(record.savings_percent) }}%</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if history %}
+<script>
+// Historical Trend Chart
+const historyData = {{ history | tojson }};
+
+const ctx = document.getElementById('historyChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: historyData.map(d => d.timestamp.substring(0, 10)),
+        datasets: [
+            {
+                label: 'Current Price',
+                data: historyData.map(d => d.current_price),
+                borderColor: 'rgb(220, 53, 69)',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.1
+            },
+            {
+                label: 'Optimal Price',
+                data: historyData.map(d => d.optimal_price),
+                borderColor: 'rgb(25, 135, 84)',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.1
+            },
+            {
+                label: 'Savings',
+                data: historyData.map(d => d.savings),
+                borderColor: 'rgb(255, 193, 7)',
+                backgroundColor: 'rgba(255, 193, 7, 0.3)',
+                tension: 0.1,
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += '$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Cost Breakdown Pie Charts
+const currentClusters = {{ current_clusters | tojson }};
+const optimalClusters = {{ optimal_clusters | tojson }};
+
+// Calculate totals for current
+let currentInstanceTotal = 0;
+let currentStorageTotal = 0;
+currentClusters.forEach(c => {
+    currentInstanceTotal += c.instance_price;
+    currentStorageTotal += c.storage_price;
+});
+
+// Calculate totals for optimal
+let optimalInstanceTotal = 0;
+let optimalStorageTotal = 0;
+optimalClusters.forEach(c => {
+    optimalInstanceTotal += c.instance_price;
+    optimalStorageTotal += c.storage_price;
+});
+
+// Current Cost Breakdown Chart
+const ctxCurrent = document.getElementById('currentCostChart').getContext('2d');
+new Chart(ctxCurrent, {
+    type: 'pie',
+    data: {
+        labels: ['Instance Cost', 'Storage Cost'],
+        datasets: [{
+            data: [currentInstanceTotal, currentStorageTotal],
+            backgroundColor: [
+                'rgba(220, 53, 69, 0.8)',
+                'rgba(255, 193, 7, 0.8)'
+            ],
+            borderColor: [
+                'rgb(220, 53, 69)',
+                'rgb(255, 193, 7)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += '$' + context.parsed.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                        // Add percentage
+                        const total = currentInstanceTotal + currentStorageTotal;
+                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                        label += ' (' + percentage + '%)';
+
+                        return label;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Optimal Cost Breakdown Chart
+const ctxOptimal = document.getElementById('optimalCostChart').getContext('2d');
+new Chart(ctxOptimal, {
+    type: 'pie',
+    data: {
+        labels: ['Instance Cost', 'Storage Cost'],
+        datasets: [{
+            data: [optimalInstanceTotal, optimalStorageTotal],
+            backgroundColor: [
+                'rgba(25, 135, 84, 0.8)',
+                'rgba(13, 202, 240, 0.8)'
+            ],
+            borderColor: [
+                'rgb(25, 135, 84)',
+                'rgb(13, 202, 240)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += '$' + context.parsed.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                        // Add percentage
+                        const total = optimalInstanceTotal + optimalStorageTotal;
+                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                        label += ' (' + percentage + '%)';
+
+                        return label;
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,641 @@
+/*
+ * AA Report Dashboard - Custom Styles
+ * Based on Redis Cloud UI design (1:1 copy)
+ * ==========================================
+ */
+
+:root {
+    /* Redis Cloud colors - soft pastels */
+    --redis-red: #DC382D;
+    --bg-page: #f8f9fa;
+    --bg-card: #ffffff;
+    --text-primary: #2d3748;
+    --text-secondary: #718096;
+    --text-muted: #a0aec0;
+    --border-color: #e2e8f0;
+    --border-light: #edf2f7;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
+
+    /* Soft pastel colors for UI elements */
+    --color-blue-soft: #e3f2fd;
+    --color-blue-text: #1976d2;
+    --color-green-soft: #e8f5e9;
+    --color-green-text: #388e3c;
+    --color-red-soft: #ffebee;
+    --color-red-text: #d32f2f;
+    --color-orange-soft: #fff3e0;
+    --color-orange-text: #f57c00;
+    --color-purple-soft: #f3e5f5;
+    --color-purple-text: #7b1fa2;
+
+    /* Base font size - increased for better readability */
+    --base-font-size: 16px;
+}
+
+/* General */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-page);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: var(--text-primary);
+    font-size: var(--base-font-size);
+}
+
+main {
+    flex: 1;
+    padding-top: 3rem;
+    padding-bottom: 4rem;
+}
+
+/* Container */
+.container {
+    max-width: 1280px;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+}
+
+/* Navigation - Clean white header */
+.navbar {
+    background-color: var(--bg-card) !important;
+    border-bottom: 1px solid var(--border-light);
+    padding: 0.75rem 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--text-primary) !important;
+}
+
+.navbar-brand i {
+    margin-right: 0.5rem;
+    color: var(--redis-red);
+}
+
+.nav-link {
+    font-weight: 500;
+    transition: all 0.15s ease;
+    color: var(--text-secondary) !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.375rem;
+    font-size: 15px; /* Increased from 14px */
+}
+
+.nav-link:hover {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-page);
+}
+
+.nav-link.active {
+    font-weight: 600;
+    color: var(--bg-card) !important;
+    background-color: var(--redis-red);
+}
+
+/* Cards - White with minimal borders */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.15s ease;
+    margin-bottom: 3rem;
+    border: 1px solid var(--border-light);
+    background-color: var(--bg-card);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-header {
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+    font-weight: 600;
+    padding: 1.5rem 2rem;
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+    font-size: 16px;
+}
+
+/* Soft colored card headers */
+.card-header.bg-primary {
+    background-color: var(--color-blue-soft) !important;
+    color: var(--color-blue-text) !important;
+    border-bottom: 1px solid var(--color-blue-text);
+}
+
+.card-header.bg-success {
+    background-color: var(--color-green-soft) !important;
+    color: var(--color-green-text) !important;
+    border-bottom: 1px solid var(--color-green-text);
+}
+
+.card-header.bg-danger {
+    background-color: var(--color-red-soft) !important;
+    color: var(--color-red-text) !important;
+    border-bottom: 1px solid var(--color-red-text);
+}
+
+.card-header.bg-warning {
+    background-color: var(--color-orange-soft) !important;
+    color: var(--color-orange-text) !important;
+    border-bottom: 1px solid var(--color-orange-text);
+}
+
+.card-header.bg-info {
+    background-color: var(--color-purple-soft) !important;
+    color: var(--color-purple-text) !important;
+    border-bottom: 1px solid var(--color-purple-text);
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+/* Stat Cards - WHITE background with colored icons ONLY */
+.card.text-white,
+.card.bg-primary,
+.card.bg-success,
+.card.bg-danger,
+.card.bg-warning,
+.card.bg-info {
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-light);
+}
+
+.card.text-white .card-body {
+    padding: 2rem;
+}
+
+.card.text-white .card-title {
+    font-size: 0.85rem; /* Increased from 0.75rem */
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.card.text-white .display-4 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* Icon colors for stat cards - softer tones */
+.card.bg-primary i {
+    color: var(--color-blue-text);
+}
+
+.card.bg-success i {
+    color: var(--color-green-text);
+}
+
+.card.bg-danger i {
+    color: var(--color-red-text);
+}
+
+.card.bg-warning i {
+    color: var(--color-orange-text);
+}
+
+.card.bg-info i {
+    color: var(--color-purple-text);
+}
+
+/* Tables - Clean and minimal with more spacing - INCREASED FONT SIZES */
+.table {
+    margin-bottom: 0;
+    font-size: 15px; /* Increased from 14px */
+}
+
+.table thead th {
+    background-color: var(--bg-page);
+    border-bottom: 1px solid var(--border-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem; /* Increased from 0.7rem */
+    letter-spacing: 0.5px;
+    padding: 1rem 1.25rem;
+    color: var(--text-secondary);
+}
+
+.table tbody td {
+    padding: 1.25rem 1.25rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+    font-size: 15px; /* Added explicit size */
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--bg-page);
+    cursor: pointer;
+}
+
+.table code {
+    background-color: var(--bg-page);
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.25rem;
+    font-size: 0.95rem; /* Increased from 0.875rem */
+    color: var(--redis-red);
+    border: 1px solid var(--border-light);
+}
+
+/* DataTables - INCREASED FONT SIZES */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    font-size: 15px; /* Added explicit size */
+}
+
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    margin-left: 0.5rem;
+    font-size: 15px; /* Increased from 14px */
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.5rem;
+    font-size: 15px; /* Increased from 14px */
+}
+
+/* Badges - soft colors */
+.badge {
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    font-size: 0.85rem; /* Increased from 0.75rem */
+    border-radius: 0.25rem;
+}
+
+.badge.bg-success {
+    background-color: var(--color-green-soft) !important;
+    color: var(--color-green-text) !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--color-red-soft) !important;
+    color: var(--color-red-text) !important;
+}
+
+.badge.bg-primary {
+    background-color: var(--color-blue-soft) !important;
+    color: var(--color-blue-text) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--color-orange-soft) !important;
+    color: var(--color-orange-text) !important;
+}
+
+/* Buttons - Clean Redis style */
+.btn {
+    font-weight: 500;
+    transition: all 0.15s ease;
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    font-size: 15px; /* Increased from 14px */
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary {
+    background-color: var(--redis-red);
+    border-color: var(--redis-red);
+}
+
+.btn-primary:hover {
+    background-color: #c22d23;
+    border-color: #c22d23;
+}
+
+.btn-sm {
+    font-size: 0.875rem; /* Increased from 0.8125rem */
+    padding: 0.375rem 0.75rem;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 1.5rem;
+}
+
+.breadcrumb-item a {
+    color: var(--redis-red);
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+/* Alerts */
+.alert {
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-sm);
+}
+
+.alert i {
+    margin-right: 0.5rem;
+}
+
+/* Footer - Clean white */
+.footer {
+    background-color: var(--bg-card);
+    border-top: 1px solid var(--border-light);
+    margin-top: 3rem;
+    padding: 2rem 0;
+    color: var(--text-secondary);
+}
+
+.footer .text-muted {
+    font-size: 0.95rem; /* Increased from 0.875rem */
+    color: var(--text-muted) !important;
+}
+
+.footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    color: var(--redis-red);
+}
+
+/* Charts */
+canvas {
+    max-height: 400px;
+}
+
+/* Page headers */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.display-4 {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.lead {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+/* Links */
+a {
+    color: var(--redis-red);
+    text-decoration: none;
+}
+
+a:hover {
+    color: #c22d23;
+    text-decoration: underline;
+}
+
+/* Form controls */
+.form-control, .form-select {
+    border-color: var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 15px; /* Increased from 14px */
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--redis-red);
+    box-shadow: 0 0 0 0.15rem rgba(220, 56, 45, 0.1);
+}
+
+/* Spacing - more breathing room */
+.mb-5 {
+    margin-bottom: 3.5rem !important;
+}
+
+.mt-5 {
+    margin-top: 3.5rem !important;
+}
+
+.mb-4 {
+    margin-bottom: 3rem !important;
+}
+
+.mb-3 {
+    margin-bottom: 2.5rem !important;
+}
+
+/* Row spacing */
+.row {
+    margin-bottom: 0;
+}
+
+.row.mb-5 {
+    margin-bottom: 3.5rem !important;
+}
+
+.row.mb-4 {
+    margin-bottom: 3rem !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card.text-white .display-4 {
+        font-size: 1.75rem;
+    }
+
+    .display-4 {
+        font-size: 2rem;
+    }
+
+    .h2 {
+        font-size: 1.5rem;
+    }
+
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .card-body {
+        padding: 1.25rem;
+    }
+
+    .card-header {
+        padding: 1rem 1.25rem;
+    }
+
+    .text-md-end {
+        text-align: left !important;
+        margin-top: 0.75rem;
+    }
+}
+
+/* Scrollbar - minimal */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-page);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Animations - subtle */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Executive Metrics Cards - Enhanced styling */
+.card.border-success,
+.card.border-primary,
+.card.border-info,
+.card.border-warning,
+.card.border-danger,
+.card.border-secondary {
+    border-width: 2px !important;
+    transition: all 0.2s ease;
+}
+
+.card.border-success:hover {
+    border-color: var(--color-green-text) !important;
+    box-shadow: 0 4px 12px rgba(56, 142, 60, 0.15);
+}
+
+.card.border-primary:hover {
+    border-color: var(--color-blue-text) !important;
+    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+}
+
+.card.border-info:hover {
+    border-color: var(--color-purple-text) !important;
+    box-shadow: 0 4px 12px rgba(123, 31, 162, 0.15);
+}
+
+.card.border-warning:hover {
+    border-color: var(--color-orange-text) !important;
+    box-shadow: 0 4px 12px rgba(245, 124, 0, 0.15);
+}
+
+.card.border-danger:hover {
+    border-color: var(--color-red-text) !important;
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.15);
+}
+
+.card.border-secondary:hover {
+    border-color: #6c757d !important;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.15);
+}
+
+/* Compact metric cards - INCREASED FONT SIZES */
+.metric-card-body {
+    padding: 0.5rem 0.75rem !important; /* Symmetric top/bottom padding */
+}
+
+.metric-card-title {
+    font-size: 0.95rem !important; /* Increased from 0.875rem */
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    line-height: 1.2 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.metric-card-number {
+    font-size: 3rem !important; /* Increased from 2.5rem */
+    font-weight: 700 !important;
+    line-height: 1 !important; /* Tight line-height for numbers */
+    margin-bottom: 0.25rem !important;
+}
+
+.metric-card-description {
+    font-size: 0.9rem !important; /* Increased from 0.85rem */
+    line-height: 1.2 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Section headers for metric rows */
+h5.text-muted {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.95rem; /* Increased from 0.875rem */
+    margin-bottom: 1rem;
+}
+
+/* Clickable table rows - enhanced hover effect */
+#runsHistoryTable tbody tr {
+    transition: all 0.15s ease;
+}
+
+#runsHistoryTable tbody tr:hover {
+    background-color: var(--color-blue-soft) !important;
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+#runsHistoryTable tbody tr.table-primary {
+    background-color: rgba(227, 242, 253, 0.5) !important;
+    border-left: 3px solid var(--color-blue-text);
+}
+
+#runsHistoryTable tbody tr.table-primary:hover {
+    background-color: var(--color-blue-soft) !important;
+}
+
+/* Print */
+@media print {
+    .navbar,
+    .footer,
+    .btn,
+    .breadcrumb {
+        display: none;
+    }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid var(--border-color);
+    }
+}
+

@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Top Savings - AA Report{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h1 class="h2 mb-2">
+            <i class="bi bi-trophy"></i> Top Savings Opportunities
+        </h1>
+        <p class="text-muted mb-0" style="font-size: 0.95rem;">Clusters with highest potential cost savings</p>
+    </div>
+</div>
+
+<!-- Filters Panel -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-funnel-fill"></i> Filters</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="run_id" class="form-label"><i class="bi bi-calendar3"></i> Run / Date</label>
+                <select name="run_id" id="run_id" class="form-select filter-select">
+                    <option value="">Latest Run</option>
+                    {% for run in all_runs %}
+                    <option value="{{ run.run_id }}"
+                            {% if selected_run and run.run_id == selected_run.run_id %}selected{% endif %}>
+                        Run #{{ run.run_id }} - {{ run.run_timestamp[:10] }} - {{ run.jira_ticket }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="cloud_provider" class="form-label"><i class="bi bi-cloud"></i> Cloud Provider</label>
+                <select name="cloud_provider" id="cloud_provider" class="form-select filter-select">
+                    <option value="all" {% if cloud_provider_filter == 'all' %}selected{% endif %}>All</option>
+                    {% for provider in cloud_providers %}
+                    <option value="{{ provider }}" {% if cloud_provider_filter == provider %}selected{% endif %}>
+                        {{ provider|upper }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="redis_version" class="form-label"><i class="bi bi-database"></i> Redis Version</label>
+                <select name="redis_version" id="redis_version" class="form-select filter-select">
+                    <option value="all" {% if redis_version_filter == 'all' %}selected{% endif %}>All Versions</option>
+                    {% for version in redis_versions %}
+                    <option value="{{ version }}" {% if redis_version_filter == version %}selected{% endif %}>
+                        Redis {{ version }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="top_n" class="form-label"><i class="bi bi-hash"></i> Top N Clusters</label>
+                <select name="top_n" id="top_n" class="form-select filter-select">
+                    <option value="20" {% if top_n == 20 %}selected{% endif %}>20</option>
+                    <option value="50" {% if top_n == 50 %}selected{% endif %}>50</option>
+                    <option value="all" {% if top_n == 'all' %}selected{% endif %}>All</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-secondary w-100" id="resetFilters">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Savings Table -->
+{% if opportunities %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-table"></i> Top {{ opportunities | length }} Savings Opportunities</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="savingsTable" class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Cluster UID</th>
+                                <th>Cloud Provider</th>
+                                <th>Redis Version</th>
+                                <th>Created</th>
+                                <th class="text-end">Current Price</th>
+                                <th class="text-end">Optimal Price</th>
+                                <th class="text-end">Savings</th>
+                                <th class="text-end">Savings %</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cluster in opportunities %}
+                            <tr>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td><code>{{ cluster.mc_uid }}</code></td>
+                                <td>
+                                    {% if cluster.cloud_provider %}
+                                    <span class="badge bg-info">{{ cluster.cloud_provider|upper }}</span>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cluster.redis_version %}
+                                    <span class="badge bg-success">{{ cluster.redis_version }}</span>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cluster.created_at %}
+                                    <small>{{ cluster.created_at[:10] }}</small>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">${{ "{:,.2f}".format(cluster.current_price) }}</td>
+                                <td class="text-end">${{ "{:,.2f}".format(cluster.optimal_price) }}</td>
+                                <td class="text-end">
+                                    <span class="text-success fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-success">{{ "{:.1f}".format(cluster.savings_percent) }}%</span>
+                                </td>
+                                <td>
+                                    <a href="/cluster/{{ cluster.mc_uid }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-warning fw-bold">
+                                <td colspan="5">TOTAL</td>
+                                <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='current_price')) }}</td>
+                                <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='optimal_price')) }}</td>
+                                <td class="text-end text-success">${{ "{:,.2f}".format(opportunities | sum(attribute='savings')) }}</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Savings Chart -->
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-bar-chart"></i> Savings Visualization</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="savingsChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    No savings data available for the selected run.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if opportunities %}
+<script>
+$(document).ready(function() {
+    $('#savingsTable').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        order: [[4, 'desc']]
+    });
+});
+
+// Savings Bar Chart
+const savingsData = {{ opportunities | tojson }};
+
+const ctx = document.getElementById('savingsChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: savingsData.map(d => d.mc_uid),
+        datasets: [
+            {
+                label: 'Current Price',
+                data: savingsData.map(d => d.current_price),
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: 'rgb(220, 53, 69)',
+                borderWidth: 1
+            },
+            {
+                label: 'Optimal Price',
+                data: savingsData.map(d => d.optimal_price),
+                backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                borderColor: 'rgb(25, 135, 84)',
+                borderWidth: 1
+            },
+            {
+                label: 'Savings',
+                data: savingsData.map(d => d.savings),
+                backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                borderColor: 'rgb(255, 193, 7)',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += '$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            },
+            x: {
+                ticks: {
+                    maxRotation: 45,
+                    minRotation: 45
+                }
+            }
+        }
+    }
+});
+
+// Reset Filters button
+document.getElementById('resetFilters').addEventListener('click', function() {
+    window.location.href = '/top-savings';
+});
+
+// Auto-apply filters on change
+const filterSelects = document.querySelectorAll('.filter-select');
+
+// Function to apply filters by reloading the page with new parameters
+function applyFilters() {
+    const runId = document.getElementById('run_id').value;
+    const cloudProvider = document.getElementById('cloud_provider').value;
+    const redisVersion = document.getElementById('redis_version').value;
+    const topN = document.getElementById('top_n').value;
+
+    // Build URL with parameters
+    const params = new URLSearchParams();
+    if (runId) params.append('run_id', runId);
+    if (cloudProvider !== 'all') params.append('cloud_provider', cloudProvider);
+    if (redisVersion !== 'all') params.append('redis_version', redisVersion);
+    if (topN !== '20') params.append('top_n', topN);
+
+    // Reload page with new filters
+    window.location.href = '/top-savings?' + params.toString();
+}
+
+// Add event listeners to all filter selects for auto-apply
+filterSelects.forEach(select => {
+    select.addEventListener('change', applyFilters);
+});
+
+</script>
+{% endif %}
+{% endblock %}

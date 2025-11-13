@@ -1,0 +1,1614 @@
+{% extends "base.html" %}
+
+{% block title %}Charts & Analytics - Active-Active Cost Analysis{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="h2 mb-2">
+            <i class="bi bi-bar-chart-line-fill"></i> Charts & Analytics
+        </h1>
+        <p class="text-muted mb-0" style="font-size: 0.95rem;">Comprehensive visualizations and data analysis</p>
+    </div>
+    {% if latest_run %}
+    <div class="col-md-4 text-md-end">
+        <div class="text-muted" style="font-size: 0.875rem;">
+            <strong><i class="bi bi-database"></i> Latest Run:</strong> Run #{{ latest_run.run_id }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if not latest_run %}
+<div class="alert alert-warning" role="alert">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>No data available.</strong> Run the AA report automation script to generate data.
+</div>
+{% else %}
+
+<!-- Filters Panel -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-funnel-fill"></i> Filters</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="runSelect" class="form-label"><i class="bi bi-calendar3"></i> Run / Date</label>
+                <select class="form-select filter-select" id="runSelect">
+                    {% for run in all_runs %}
+                    <option value="{{ run.run_id }}" {% if loop.first %}selected{% endif %}>
+                        Run #{{ run.run_id }} - {{ run.run_timestamp[:10] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="cloudProvider" class="form-label"><i class="bi bi-cloud"></i> Cloud Provider</label>
+                <select class="form-select filter-select" id="cloudProvider">
+                    <option value="All" selected>All</option>
+                    <!-- Will be populated dynamically -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="redisVersion" class="form-label"><i class="bi bi-database"></i> Redis Version</label>
+                <select class="form-select filter-select" id="redisVersion">
+                    <option value="All" selected>All Versions</option>
+                    <!-- Will be populated dynamically -->
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="topN" class="form-label"><i class="bi bi-list-ol"></i> Top N Clusters</label>
+                <select class="form-select filter-select" id="topN">
+                    <option value="10" selected>Top 10</option>
+                    <option value="20">Top 20</option>
+                    <option value="50">Top 50</option>
+                    <option value="100">Top 100</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-secondary w-100" id="resetFilters">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 1: Action Priority & Decision Making -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-bullseye"></i> Action Priority & Decision Making</h5>
+
+    <div class="row g-3 mb-3">
+        <!-- ROI Timeline Projection -->
+        <div class="col-md-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-graph-up-arrow"></i> ROI Timeline Projection</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="roiTimelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 2: Time-based Analytics -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-clock-history"></i> Time-based Analytics</h5>
+    
+    <div class="row g-3 mb-3">
+        <!-- Multi-Run Comparison -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-graph-up"></i> Multi-Run Comparison</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="multiRunComparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Savings Velocity -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-speedometer2"></i> Savings Velocity</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="savingsVelocityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 3: Geographic & Cloud Provider Analysis -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-globe"></i> Geographic & Cloud Provider Analysis</h5>
+
+    <div class="row g-3 mb-3">
+        <!-- Cloud Provider Comparison -->
+        <div class="col-md-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-cloud-fill"></i> Cloud Provider Comparison</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="cloudProviderComparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 4: Instance Type & Configuration Analysis -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-cpu-fill"></i> Instance Type & Configuration Analysis</h5>
+
+    <div class="row g-3 mb-3">
+        <!-- Instance Type Efficiency Matrix -->
+        <div class="col-md-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-diagram-3-fill"></i> Instance Type Efficiency Matrix</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="instanceEfficiencyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 5: Storage Analytics -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-hdd-fill"></i> Storage Analytics</h5>
+    
+    <div class="row g-3 mb-3">
+        <!-- Storage Type Distribution -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-pie-chart-fill"></i> Storage Type Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="storageTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instance vs Storage Breakdown -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-stack"></i> Instance vs Storage Breakdown</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="instanceStorageBreakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 6: Redis Version Analytics -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-database-fill"></i> Redis Version Analytics</h5>
+    
+    <div class="row g-3 mb-3">
+        <!-- Redis Version Analysis -->
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-bar-chart"></i> Redis Version Adoption & Cost</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="redisVersionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 7: Cluster Size & Complexity -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-boxes"></i> Cluster Size & Complexity</h5>
+    
+    <div class="row g-3 mb-3">
+        <!-- Cluster Size vs Savings Correlation -->
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-scatter-chart"></i> Cluster Size vs Savings Correlation</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="clusterSizeCorrelationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 8: Comparison & Benchmarking -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-arrows-angle-contract"></i> Comparison & Benchmarking</h5>
+
+    <div class="row g-3 mb-3">
+        <!-- Current vs Optimal Radar Chart -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-radar"></i> Current vs Optimal Radar</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current vs Optimal Bar Chart -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Current vs Optimal Comparison</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="currentVsOptimalChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 9: Cost Breakdown & Analysis -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-cash-stack"></i> Cost Breakdown & Analysis</h5>
+
+    <div class="row g-3 mb-3">
+        <!-- Pareto Chart - Top Cost Drivers -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-graph-down"></i> Top Cost Drivers (Pareto)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="paretoChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Savings Distribution -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-bar-chart-line"></i> Savings Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="savingsDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <!-- Top Clusters by Savings -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-trophy-fill"></i> Top Clusters by Savings</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="topClustersChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Savings Breakdown (Instance vs Storage) -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-pie-chart"></i> Savings Breakdown</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="savingsBreakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 10: Anomaly Detection -->
+<div class="mb-4">
+    <h5 class="text-primary mb-3"><i class="bi bi-exclamation-triangle-fill"></i> Anomaly Detection</h5>
+
+    <div class="row g-3 mb-3">
+        <!-- Outlier Detection Box Plot -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-box"></i> Cost Outlier Detection</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="outlierDetectionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Savings Heatmap -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-grid-3x2-gap-fill"></i> Savings Heatmap</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="savingsHeatmapChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Global variables
+let currentRunId = {{ latest_run.run_id if latest_run else 'null' }};
+let charts = {};
+
+// Initialize all charts on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (currentRunId) {
+        loadFilters(currentRunId);
+        loadAllCharts();
+    }
+
+    // Setup filter event listeners
+    document.getElementById('runSelect').addEventListener('change', function() {
+        currentRunId = parseInt(this.value);
+        loadFilters(currentRunId);
+        loadAllCharts();
+    });
+
+    document.getElementById('cloudProvider').addEventListener('change', function() {
+        loadAllCharts();
+    });
+
+    document.getElementById('redisVersion').addEventListener('change', function() {
+        loadAllCharts();
+    });
+
+    document.getElementById('topN').addEventListener('change', function() {
+        loadAllCharts();
+    });
+
+    document.getElementById('resetFilters').addEventListener('click', function() {
+        document.getElementById('runSelect').selectedIndex = 0;
+        document.getElementById('cloudProvider').selectedIndex = 0;
+        document.getElementById('redisVersion').selectedIndex = 0;
+        document.getElementById('topN').selectedIndex = 0;
+        currentRunId = parseInt(document.getElementById('runSelect').value);
+        loadFilters(currentRunId);
+        loadAllCharts();
+    });
+});
+
+// Load filter options
+function loadFilters(runId) {
+    // Load cloud providers
+    fetch(`/api/filters/cloud-providers?run_id=${runId}`)
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('cloudProvider');
+            const currentValue = select.value;
+
+            // Clear existing options except "All"
+            select.innerHTML = '<option value="All">All</option>';
+
+            // Add provider options
+            data.providers.forEach(provider => {
+                const option = document.createElement('option');
+                option.value = provider;
+                option.textContent = provider;
+                select.appendChild(option);
+            });
+
+            // Restore previous selection if exists
+            if (currentValue && currentValue !== 'All') {
+                select.value = currentValue;
+            }
+        })
+        .catch(error => console.error('Error loading cloud providers:', error));
+
+    // Load Redis versions
+    fetch(`/api/filters/redis-versions?run_id=${runId}`)
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('redisVersion');
+            const currentValue = select.value;
+
+            // Clear existing options except "All"
+            select.innerHTML = '<option value="All">All Versions</option>';
+
+            // Add version options
+            data.versions.forEach(version => {
+                const option = document.createElement('option');
+                option.value = version;
+                option.textContent = `Redis ${version}`;
+                select.appendChild(option);
+            });
+
+            // Restore previous selection if exists
+            if (currentValue && currentValue !== 'All') {
+                select.value = currentValue;
+            }
+        })
+        .catch(error => console.error('Error loading Redis versions:', error));
+}
+
+// Get current filter values
+function getFilters() {
+    return {
+        runId: currentRunId,
+        cloudProvider: document.getElementById('cloudProvider').value,
+        redisVersion: document.getElementById('redisVersion').value,
+        topN: document.getElementById('topN').value
+    };
+}
+
+// Load all charts
+function loadAllCharts() {
+    const filters = getFilters();
+
+    // Action Priority
+    loadROITimeline(filters);
+
+    // Time-based
+    loadMultiRunComparison();
+    loadSavingsVelocity();
+
+    // Geographic
+    loadCloudProviderComparison(filters);
+
+    // Instance Type
+    loadInstanceEfficiency(filters);
+
+    // Storage
+    loadStorageTypeDistribution(filters);
+    loadInstanceStorageBreakdown(filters);
+
+    // Redis Version
+    loadRedisVersionAnalysis(filters);
+
+    // Cluster Size
+    loadClusterSizeCorrelation(filters);
+
+    // Comparison
+    loadRadarChart(filters);
+    loadCurrentVsOptimal(filters);
+
+    // Cost Breakdown
+    loadParetoChart(filters);
+    loadSavingsDistribution(filters);
+    loadTopClusters(filters);
+    loadSavingsBreakdown(filters);
+
+    // Anomaly Detection
+    loadOutlierDetection(filters);
+    loadSavingsHeatmap(filters);
+}
+
+// ============================================================================
+// ACTION PRIORITY CHARTS
+// ============================================================================
+
+function loadROITimeline(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        limit: filters.topN,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/roi-timeline?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('roiTimelineChart').getContext('2d');
+
+            if (charts.roiTimeline) charts.roiTimeline.destroy();
+
+            charts.roiTimeline = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Incremental Savings',
+                            data: data.incremental,
+                            type: 'bar',
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Cumulative Savings',
+                            data: data.cumulative,
+                            type: 'line',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Top ${topN} Clusters - Cumulative ROI Timeline`
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Incremental Savings ($)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Cumulative Savings ($)' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading ROI timeline:', error));
+}
+
+// ============================================================================
+// TIME-BASED ANALYTICS CHARTS
+// ============================================================================
+
+function loadMultiRunComparison() {
+    fetch('/api/charts/multi-run-comparison?limit=10')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('multiRunComparisonChart').getContext('2d');
+
+            if (charts.multiRunComparison) charts.multiRunComparison.destroy();
+
+            charts.multiRunComparison = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Current Cost',
+                            data: data.current_cost,
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Optimal Cost',
+                            data: data.optimal_cost,
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Total Savings',
+                            data: data.savings,
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Cost Trends Across Runs'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Cost ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading multi-run comparison:', error));
+}
+
+function loadSavingsVelocity() {
+    fetch('/api/charts/savings-velocity?limit=10')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('savingsVelocityChart').getContext('2d');
+
+            if (charts.savingsVelocity) charts.savingsVelocity.destroy();
+
+            charts.savingsVelocity = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Savings Change',
+                        data: data.velocity,
+                        backgroundColor: data.colors,
+                        borderColor: data.colors.map(c => c.replace('0.6', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Savings Change Between Runs'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: 'Change in Savings ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading savings velocity:', error));
+}
+
+// ============================================================================
+// GEOGRAPHIC & CLOUD PROVIDER CHARTS
+// ============================================================================
+
+function loadCloudProviderComparison(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/cloud-provider-comparison?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('cloudProviderComparisonChart').getContext('2d');
+
+            if (charts.cloudProviderComparison) charts.cloudProviderComparison.destroy();
+
+            charts.cloudProviderComparison = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.providers,
+                    datasets: [
+                        {
+                            label: 'Current Instance Cost',
+                            data: data.current_instance,
+                            backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                            stack: 'current'
+                        },
+                        {
+                            label: 'Current Storage Cost',
+                            data: data.current_storage,
+                            backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                            stack: 'current'
+                        },
+                        {
+                            label: 'Optimal Instance Cost',
+                            data: data.optimal_instance,
+                            backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                            stack: 'optimal'
+                        },
+                        {
+                            label: 'Optimal Storage Cost',
+                            data: data.optimal_storage,
+                            backgroundColor: 'rgba(13, 202, 240, 0.7)',
+                            stack: 'optimal'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Cost Breakdown by Cloud Provider'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Cost ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading cloud provider comparison:', error));
+}
+
+// ============================================================================
+// INSTANCE TYPE & CONFIGURATION CHARTS
+// ============================================================================
+
+function loadInstanceEfficiency(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/instance-efficiency-matrix?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('instanceEfficiencyChart').getContext('2d');
+
+            if (charts.instanceEfficiency) charts.instanceEfficiency.destroy();
+
+            charts.instanceEfficiency = new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Instance Types',
+                        data: data.data,
+                        backgroundColor: 'rgba(13, 110, 253, 0.6)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Instance Type Efficiency (Cost vs Savings %)'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const item = context.raw;
+                                    return [
+                                        `Instance: ${item.label}`,
+                                        `Avg Cost: $${item.x}`,
+                                        `Avg Savings: ${item.y}%`,
+                                        `Cluster Count: ${item.count}`,
+                                        `Provider: ${item.provider}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Average Cost ($)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Average Savings (%)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading instance efficiency:', error));
+}
+
+// ============================================================================
+// STORAGE ANALYTICS CHARTS
+// ============================================================================
+
+function loadStorageTypeDistribution(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/storage-type-distribution?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('storageTypeChart').getContext('2d');
+
+            if (charts.storageType) charts.storageType.destroy();
+
+            charts.storageType = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.storage_types,
+                    datasets: [{
+                        label: 'Cluster Count',
+                        data: data.cluster_counts,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Storage Type Distribution'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const idx = context.dataIndex;
+                                    return `Avg Savings: $${data.avg_savings[idx]}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading storage type distribution:', error));
+}
+
+function loadInstanceStorageBreakdown(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        limit: filters.topN,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/instance-storage-breakdown?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('instanceStorageBreakdownChart').getContext('2d');
+
+            if (charts.instanceStorageBreakdown) charts.instanceStorageBreakdown.destroy();
+
+            charts.instanceStorageBreakdown = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Instance Savings',
+                            data: data.instance_savings,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            stack: 'savings'
+                        },
+                        {
+                            label: 'Storage Savings',
+                            data: data.storage_savings,
+                            backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                            stack: 'savings'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    indexAxis: 'y',
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Top ${topN} Clusters - Instance vs Storage Savings`
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Savings ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading instance storage breakdown:', error));
+}
+
+// ============================================================================
+// REDIS VERSION ANALYTICS CHARTS
+// ============================================================================
+
+function loadRedisVersionAnalysis(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/redis-version-analysis?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('redisVersionChart').getContext('2d');
+
+            if (charts.redisVersion) charts.redisVersion.destroy();
+
+            charts.redisVersion = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.versions,
+                    datasets: [
+                        {
+                            label: 'Cluster Count',
+                            data: data.cluster_counts,
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Avg Cost',
+                            data: data.avg_cost,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Avg Savings %',
+                            data: data.avg_savings_percent,
+                            type: 'line',
+                            borderColor: 'rgba(255, 206, 86, 1)',
+                            backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                            fill: false,
+                            yAxisID: 'y2'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Redis Version Analysis'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Cluster Count' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Avg Cost ($)' },
+                            grid: { drawOnChartArea: false }
+                        },
+                        y2: {
+                            type: 'linear',
+                            display: false,
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading Redis version analysis:', error));
+}
+
+// ============================================================================
+// CLUSTER SIZE & COMPLEXITY CHARTS
+// ============================================================================
+
+function loadClusterSizeCorrelation(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/cluster-size-correlation?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('clusterSizeCorrelationChart').getContext('2d');
+
+            if (charts.clusterSizeCorrelation) charts.clusterSizeCorrelation.destroy();
+
+            charts.clusterSizeCorrelation = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Clusters',
+                        data: data.data,
+                        backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Cluster Size (Current Cost) vs Savings Potential'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const item = context.raw;
+                                    return [
+                                        `Cluster: ${item.label}`,
+                                        `Current Cost: $${item.x}`,
+                                        `Savings: $${item.y}`,
+                                        `Provider: ${item.provider}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Current Cost ($)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Total Savings ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading cluster size correlation:', error));
+}
+
+// ============================================================================
+// COMPARISON & BENCHMARKING CHARTS
+// ============================================================================
+
+function loadRadarChart(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/current-vs-optimal-radar?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+
+            if (charts.radar) charts.radar.destroy();
+
+            charts.radar = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Current',
+                            data: data.current,
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                            pointBackgroundColor: 'rgba(220, 53, 69, 1)'
+                        },
+                        {
+                            label: 'Optimal',
+                            data: data.optimal,
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                            pointBackgroundColor: 'rgba(40, 167, 69, 1)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Current vs Optimal Configuration (Normalized)'
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading radar chart:', error));
+}
+
+function loadCurrentVsOptimal(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        limit: filters.topN,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/current-vs-optimal?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('currentVsOptimalChart').getContext('2d');
+
+            if (charts.currentVsOptimal) charts.currentVsOptimal.destroy();
+
+            charts.currentVsOptimal = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Current Cost',
+                            data: data.current,
+                            backgroundColor: 'rgba(220, 53, 69, 0.7)'
+                        },
+                        {
+                            label: 'Optimal Cost',
+                            data: data.optimal,
+                            backgroundColor: 'rgba(40, 167, 69, 0.7)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Top ${topN} Clusters - Current vs Optimal Cost`
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Cost ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading current vs optimal:', error));
+}
+
+// ============================================================================
+// COST BREAKDOWN & ANALYSIS CHARTS
+// ============================================================================
+
+function loadParetoChart(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        limit: filters.topN,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/pareto-cost-drivers?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('paretoChart').getContext('2d');
+
+            if (charts.pareto) charts.pareto.destroy();
+
+            charts.pareto = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Cost',
+                            data: data.costs,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Cumulative %',
+                            data: data.cumulative_percent,
+                            type: 'line',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Pareto Chart - Top Cost Drivers (80/20 Rule)'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Cost ($)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Cumulative %' },
+                            max: 100,
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading Pareto chart:', error));
+}
+
+function loadSavingsDistribution(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/savings-distribution?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('savingsDistributionChart').getContext('2d');
+
+            if (charts.savingsDistribution) charts.savingsDistribution.destroy();
+
+            charts.savingsDistribution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Number of Clusters',
+                        data: data.data,
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Savings Distribution'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Number of Clusters' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Savings Range ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading savings distribution:', error));
+}
+
+function loadTopClusters(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        limit: filters.topN,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/top-clusters?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('topClustersChart').getContext('2d');
+
+            if (charts.topClusters) charts.topClusters.destroy();
+
+            charts.topClusters = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Total Savings',
+                        data: data.data,
+                        backgroundColor: 'rgba(255, 193, 7, 0.6)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    indexAxis: 'y',
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Top ${topN} Clusters by Savings`
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Savings ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading top clusters:', error));
+}
+
+function loadSavingsBreakdown(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/savings-breakdown?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('savingsBreakdownChart').getContext('2d');
+
+            if (charts.savingsBreakdown) charts.savingsBreakdown.destroy();
+
+            charts.savingsBreakdown = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Savings Breakdown: Instance vs Storage'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading savings breakdown:', error));
+}
+
+// ============================================================================
+// ANOMALY DETECTION CHARTS
+// ============================================================================
+
+function loadOutlierDetection(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/outlier-detection?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('outlierDetectionChart').getContext('2d');
+
+            if (charts.outlierDetection) charts.outlierDetection.destroy();
+
+            // Create box plot using scatter chart
+            const datasets = [];
+            const labels = [];
+
+            data.data.forEach((item, idx) => {
+                labels.push(item.provider);
+
+                // Box plot main body
+                datasets.push({
+                    label: `${item.provider} - Range`,
+                    data: [{
+                        x: idx,
+                        y: item.min
+                    }, {
+                        x: idx,
+                        y: item.max
+                    }],
+                    type: 'line',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: false,
+                    showLine: true,
+                    pointRadius: 0
+                });
+
+                // Quartiles
+                datasets.push({
+                    label: `${item.provider} - IQR`,
+                    data: [{
+                        x: idx,
+                        y: item.q1
+                    }, {
+                        x: idx,
+                        y: item.q3
+                    }],
+                    type: 'line',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderWidth: 10,
+                    showLine: true,
+                    pointRadius: 0
+                });
+
+                // Median
+                datasets.push({
+                    label: `${item.provider} - Median`,
+                    data: [{
+                        x: idx,
+                        y: item.median
+                    }],
+                    type: 'scatter',
+                    backgroundColor: 'rgba(255, 99, 132, 1)',
+                    pointRadius: 5,
+                    pointStyle: 'line'
+                });
+
+                // Outliers
+                if (item.outliers && item.outliers.length > 0) {
+                    datasets.push({
+                        label: `${item.provider} - Outliers`,
+                        data: item.outliers.map(o => ({
+                            x: idx,
+                            y: o.value
+                        })),
+                        type: 'scatter',
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        pointRadius: 4
+                    });
+                }
+            });
+
+            charts.outlierDetection = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Cost Outlier Detection by Provider'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            ticks: {
+                                callback: function(value, index) {
+                                    return labels[value] || '';
+                                }
+                            },
+                            title: { display: true, text: 'Cloud Provider' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Cost ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading outlier detection:', error));
+}
+
+function loadSavingsHeatmap(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        redisVersion: filters.redisVersion
+    });
+
+    fetch(`/api/charts/savings-heatmap?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('savingsHeatmapChart').getContext('2d');
+
+            if (charts.savingsHeatmap) charts.savingsHeatmap.destroy();
+
+            charts.savingsHeatmap = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Clusters',
+                        data: data.data,
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Savings Amount vs Savings Percentage'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const item = context.raw;
+                                    return [
+                                        `Cluster: ${item.label}`,
+                                        `Savings: $${item.x}`,
+                                        `Savings %: ${item.y}%`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Total Savings ($)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Savings Percentage (%)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading savings heatmap:', error));
+}
+
+</script>
+{% endblock %}
+

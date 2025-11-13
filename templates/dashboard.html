@@ -1,0 +1,505 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Active-Active Cost Analysis{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h1 class="h2 mb-2">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h1>
+        <p class="text-muted mb-0" style="font-size: 0.95rem;">AA Cluster Optimization Overview</p>
+    </div>
+    {% if latest_run %}
+    <div class="col-md-6 text-md-end">
+        <div class="text-muted" style="font-size: 0.875rem;">
+            <strong><i class="bi bi-bar-chart-line"></i> Latest Run:</strong>
+            Run #{{ stats.run_id }} |
+            {{ stats.timestamp[:10] }} {{ stats.timestamp[11:19] }} |
+            <a href="https://redislabs.atlassian.net/browse/{{ stats.jira_ticket }}" target="_blank">{{ stats.jira_ticket }}</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if not latest_run %}
+<div class="alert alert-warning" role="alert">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>No data available.</strong> Run the AA report automation script to generate data.
+</div>
+{% else %}
+
+<!-- Row 1: Financial Metrics -->
+<div class="mb-3">
+    <h5 class="text-muted mb-3"><i class="bi bi-currency-dollar"></i> Financial Metrics</h5>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="card border-success shadow-sm h-100">
+                <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
+                    <div class="metric-card-title text-muted">
+                        <i class="bi bi-piggy-bank-fill text-success"></i> Monthly Savings Potential
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>Calculation:</strong><br>Sum of (Current Monthly Cost - Optimal Monthly Cost) for all clusters that can be optimized.<br><br><strong>Source:</strong> Latest analysis run comparing current vs optimal configurations."></i>
+                    </div>
+                    <div class="metric-card-number text-success">${{ "{:,.0f}".format(metrics.monthly_savings) }}</div>
+                    <div class="metric-card-description text-muted">
+                        {% if metrics.savings_change_percent > 0 %}
+                        <i class="bi bi-arrow-up text-success"></i> {{ "{:+.1f}".format(metrics.savings_change_percent) }}%
+                        {% elif metrics.savings_change_percent < 0 %}
+                        <i class="bi bi-arrow-down text-danger"></i> {{ "{:.1f}".format(metrics.savings_change_percent) }}%
+                        {% else %}
+                        <i class="bi bi-dash"></i> No change
+                        {% endif %}
+                        vs last run
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-primary shadow-sm h-100">
+                <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
+                    <div class="metric-card-title text-muted">
+                        <i class="bi bi-graph-up-arrow text-primary"></i> Annual ROI
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>Calculation:</strong><br>Monthly Savings × 12 months<br><br><strong>Percentage:</strong> (Annual Savings / Total Annual AA Spend) × 100<br><br>Shows the yearly return on investment if all optimizations are implemented."></i>
+                    </div>
+                    <div class="metric-card-number text-primary">${{ "{:,.0f}".format(metrics.annual_roi) }}</div>
+                    <div class="metric-card-description text-muted">
+                        <i class="bi bi-percent"></i> {{ "{:.1f}".format(metrics.savings_percent_of_spend) }}% of total AA spend
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-primary shadow-sm h-100">
+                <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
+                    <div class="metric-card-title text-muted">
+                        <i class="bi bi-cloud-fill text-primary"></i> Top Cloud Provider
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>Calculation:</strong><br>Cloud provider with the highest total monthly cost<br><br><strong>Purpose:</strong> Identifies which cloud provider accounts for the largest portion of your AA infrastructure spend.<br><br>Focus optimization efforts on the most expensive provider for maximum impact."></i>
+                    </div>
+                    <div class="metric-card-number text-primary">{{ metrics.top_cloud_provider }}</div>
+                    <div class="metric-card-description text-muted">
+                        <i class="bi bi-cash-stack"></i> ${{ "{:,.0f}".format(metrics.top_cloud_provider_cost) }} ({{ "{:.0f}".format(metrics.top_cloud_provider_percentage) }}%)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-info shadow-sm h-100">
+                <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
+                    <div class="metric-card-title text-muted">
+                        <i class="bi bi-calculator text-info"></i> Avg Savings per Cluster
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>Calculation:</strong><br>Total Monthly Savings / Number of Optimizable Clusters<br><br><strong>Median:</strong> The middle value when all cluster savings are sorted - helps identify typical savings per cluster.<br><br>Use this to prioritize which clusters to optimize first."></i>
+                    </div>
+                    <div class="metric-card-number text-info">${{ "{:,.0f}".format(metrics.avg_savings_per_cluster) }}</div>
+                    <div class="metric-card-description text-muted">
+                        <i class="bi bi-bar-chart"></i> Median: ${{ "{:,.0f}".format(metrics.median_savings) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: Operational Metrics -->
+<div class="mb-5">
+    <h5 class="text-muted mb-3"><i class="bi bi-gear-fill"></i> Operational Metrics</h5>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="card border-danger shadow-sm h-100">
+                <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
+                    <div class="metric-card-title text-muted">
+                        <i class="bi bi-star-fill text-danger"></i> High-Impact Opportunities
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>Calculation:</strong><br>Count of clusters where Monthly Savings > $2,000<br><br><strong>Purpose:</strong> Identifies clusters with the highest cost reduction potential.<br><br>Focus on these clusters first for maximum ROI."></i>
+                    </div>
+                    <div class="metric-card-number text-danger">{{ metrics.high_impact_clusters }}</div>
+                    <div class="metric-card-description text-muted">
+                        <i class="bi bi-cash-stack"></i> >$2K/month savings each
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-warning shadow-sm h-100">
+                <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
+                    <div class="metric-card-title text-muted">
+                        <i class="bi bi-exclamation-triangle-fill text-warning"></i> Clusters Needing Attention
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>Calculation:</strong><br>Count of clusters where:<br>• Monthly Savings > $1,000 OR<br>• Cost Reduction Potential > 30%<br><br><strong>Purpose:</strong> Identifies clusters requiring immediate optimization review.<br><br>These are action items for the operations team."></i>
+                    </div>
+                    <div class="metric-card-number text-warning">{{ metrics.clusters_needing_attention }}</div>
+                    <div class="metric-card-description text-muted">
+                        <i class="bi bi-clipboard-check"></i> Critical optimization needed
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-secondary shadow-sm h-100">
+                <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
+                    <div class="metric-card-title text-muted">
+                        <i class="bi bi-cpu text-secondary"></i> Most Used Instance Type
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>Calculation:</strong><br>Instance type used by the most clusters across your infrastructure<br><br><strong>Purpose:</strong> Identifies the most common instance type for targeted optimization.<br><br>Optimizing this instance type will impact the largest number of clusters."></i>
+                    </div>
+                    <div class="metric-card-number text-secondary">{{ metrics.most_used_instance }}</div>
+                    <div class="metric-card-description text-muted">
+                        <i class="bi bi-server"></i> {{ metrics.most_used_instance_count }} clusters • Avg: ${{ "{:,.0f}".format(metrics.most_used_instance_avg_cost) }}/mo
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-info shadow-sm h-100">
+                <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
+                    <div class="metric-card-title text-muted">
+                        <i class="bi bi-cloud-fill text-info"></i> Clusters by Cloud Provider
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>Calculation:</strong><br>Distribution of clusters across cloud providers<br><br><strong>Purpose:</strong> Shows multi-cloud infrastructure distribution.<br><br>Helps identify which providers to focus optimization efforts on."></i>
+                    </div>
+                    {% if metrics.top_providers|length >= 2 %}
+                    <div class="metric-card-number text-info" style="font-size: 1.5rem;">
+                        {{ metrics.top_providers[0].name }}: {{ metrics.top_providers[0].count }}
+                    </div>
+                    <div class="metric-card-description text-muted">
+                        <i class="bi bi-pie-chart-fill"></i> {{ metrics.top_providers[1].name }}: {{ metrics.top_providers[1].count }} ({{ "{:.0f}".format(metrics.top_providers[0].percentage) }}% / {{ "{:.0f}".format(metrics.top_providers[1].percentage) }}%)
+                    </div>
+                    {% elif metrics.top_providers|length == 1 %}
+                    <div class="metric-card-number text-info">{{ metrics.top_providers[0].name }}</div>
+                    <div class="metric-card-description text-muted">
+                        <i class="bi bi-server"></i> {{ metrics.top_providers[0].count }} clusters (100%)
+                    </div>
+                    {% else %}
+                    <div class="metric-card-number text-info">N/A</div>
+                    <div class="metric-card-description text-muted">
+                        <i class="bi bi-info-circle"></i> No provider data
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top 10 Savings -->
+<div class="row mb-5">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-primary">
+                <h4 class="mb-0"><i class="bi bi-trophy"></i> Top 10 Savings Opportunities</h4>
+            </div>
+            <div class="card-body">
+                {% if top_savings %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Cluster UID</th>
+                                <th>Cloud Provider</th>
+                                <th>Redis Version</th>
+                                <th>Created</th>
+                                <th class="text-end">Current Price</th>
+                                <th class="text-end">Optimal Price</th>
+                                <th class="text-end">Savings</th>
+                                <th class="text-end">Savings %</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cluster in top_savings %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><code>{{ cluster.mc_uid }}</code></td>
+                                <td>
+                                    {% if cluster.cloud_provider %}
+                                    <span class="badge bg-info">{{ cluster.cloud_provider|upper }}</span>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cluster.redis_version %}
+                                    <span class="badge bg-success">{{ cluster.redis_version }}</span>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cluster.created_at %}
+                                    <small>{{ cluster.created_at[:10] }}</small>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">${{ "{:,.2f}".format(cluster.current_price) }}</td>
+                                <td class="text-end">${{ "{:,.2f}".format(cluster.optimal_price) }}</td>
+                                <td class="text-end text-success fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</td>
+                                <td class="text-end">
+                                    <span class="badge bg-success">{{ "{:.1f}".format(cluster.savings_percent) }}%</span>
+                                </td>
+                                <td>
+                                    <a href="/cluster/{{ cluster.mc_uid }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end">
+                    <a href="/top-savings" class="btn btn-primary">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                {% else %}
+                <p class="text-muted">No savings data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Savings Trend Chart -->
+<div class="row mb-5">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-success">
+                <h4 class="mb-0"><i class="bi bi-graph-up"></i> Savings Trend (Last 10 Runs)</h4>
+            </div>
+            <div class="card-body">
+                {% if trend %}
+                <canvas id="savingsTrendChart" height="80"></canvas>
+                {% else %}
+                <p class="text-muted">Not enough data for trend analysis.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Runs History -->
+<div class="row mb-5">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0"><i class="bi bi-clock-history"></i> Runs History (Last 10 Runs)</h4>
+            </div>
+            <div class="card-body">
+                {% if runs %}
+                <div class="table-responsive">
+                    <table id="runsHistoryTable" class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Run ID</th>
+                                <th>Timestamp</th>
+                                <th class="text-center">Total Clusters</th>
+                                <th class="text-center">Processed</th>
+                                <th class="text-center">Failed</th>
+                                <th class="text-center">Status</th>
+                                <th>Completed At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for run in runs %}
+                            <tr {% if run.run_id == stats.run_id %}class="table-primary"{% endif %}
+                                style="cursor: pointer;"
+                                onclick="window.location.href='/top-savings?run_id={{ run.run_id }}';">
+                                <td><strong>#{{ run.run_id }}</strong></td>
+                                <td>{{ run.run_timestamp[:10] }} <small class="text-muted">{{ run.run_timestamp[11:19] }}</small></td>
+                                <td class="text-center">{{ run.total_clusters }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">{{ run.processed_clusters }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if run.failed_clusters > 0 %}
+                                    <span class="badge bg-danger">{{ run.failed_clusters }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">0</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if run.status == 'completed' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Completed
+                                    </span>
+                                    {% elif run.status == 'in_progress' %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-hourglass-split"></i> In Progress
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle"></i> Failed
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if run.completed_at %}
+                                    {{ run.completed_at[:10] }} <small class="text-muted">{{ run.completed_at[11:19] }}</small>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        Showing last 10 runs. Current run is highlighted in blue. Click on any row to view detailed savings for that run.
+                    </small>
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    No runs found. Run the AA report automation script to generate data.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if trend %}
+<script>
+// Savings Trend Chart
+const trendData = {{ trend | tojson }};
+
+const ctx = document.getElementById('savingsTrendChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: trendData.map(d => d.timestamp.substring(0, 10)),
+        datasets: [
+            {
+                label: 'Total Current',
+                data: trendData.map(d => d.total_current),
+                borderColor: 'rgb(220, 53, 69)',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.1
+            },
+            {
+                label: 'Total Optimal',
+                data: trendData.map(d => d.total_optimal),
+                borderColor: 'rgb(25, 135, 84)',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.1
+            },
+            {
+                label: 'Savings',
+                data: trendData.map(d => d.total_savings),
+                borderColor: 'rgb(255, 193, 7)',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                tension: 0.1,
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += '$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Initialize Bootstrap popovers for metric cards
+var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+    return new bootstrap.Popover(popoverTriggerEl, {
+        container: 'body',
+        trigger: 'hover focus'
+    });
+});
+
+// Initialize DataTable for Runs History
+$(document).ready(function() {
+    $('#runsHistoryTable').DataTable({
+        order: [[0, 'desc']],
+        pageLength: 10,
+        lengthChange: false,
+        searching: false,
+        info: false,
+        paging: false,
+        language: {
+            emptyTable: "No runs available"
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}
+
