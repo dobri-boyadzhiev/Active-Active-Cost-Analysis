@@ -37,9 +37,9 @@ function addTableClickHandlers() {
         if ($(e.target).is('a, button') || $(e.target).closest('a, button').length) {
             return;
         }
-        
+
         // Find the view button and click it
-        const viewBtn = $(this).find('a[href^="/cluster/"], a[href^="/run/"]').first();
+        const viewBtn = $(this).find('a[href*="/cluster/"], a[href*="/run/"]').first();
         if (viewBtn.length) {
             window.location.href = viewBtn.attr('href');
         }
