@@ -22,7 +22,21 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
+
+    <!-- Path Prefix Configuration -->
+    <script>
+        // Global variable for path prefix (e.g., '/aac' for Load Balancer routing)
+        window.PATH_PREFIX = '{{ request.script_root }}';
+
+        // Helper function to build URLs with path prefix
+        function buildUrl(path) {
+            // Remove leading slash from path if present
+            const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+            // Combine prefix with path, ensuring single slash
+            return window.PATH_PREFIX ? `${window.PATH_PREFIX}/${cleanPath}` : `/${cleanPath}`;
+        }
+    </script>
+
     {% block extra_head %}{% endblock %}
 </head>
 <body>

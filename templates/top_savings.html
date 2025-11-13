@@ -130,7 +130,7 @@
                                     <span class="badge bg-success">{{ "{:.1f}".format(cluster.savings_percent) }}%</span>
                                 </td>
                                 <td>
-                                    <a href="/cluster/{{ cluster.mc_uid }}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ url_for('cluster_details', mc_uid=cluster.mc_uid) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-eye"></i> View
                                     </a>
                                 </td>
@@ -259,7 +259,7 @@ new Chart(ctx, {
 
 // Reset Filters button
 document.getElementById('resetFilters').addEventListener('click', function() {
-    window.location.href = '/top-savings';
+    window.location.href = buildUrl('top-savings');
 });
 
 // Auto-apply filters on change
@@ -280,7 +280,7 @@ function applyFilters() {
     if (topN !== '20') params.append('top_n', topN);
 
     // Reload page with new filters
-    window.location.href = '/top-savings?' + params.toString();
+    window.location.href = buildUrl('top-savings') + '?' + params.toString();
 }
 
 // Add event listeners to all filter selects for auto-apply

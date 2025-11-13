@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load filter options
 function loadFilters(runId) {
     // Load cloud providers
-    fetch(`/api/filters/cloud-providers?run_id=${runId}`)
+    fetch(buildUrl(`api/filters/cloud-providers?run_id=${runId}`))
         .then(response => response.json())
         .then(data => {
             const select = document.getElementById('cloudProvider');
@@ -426,7 +426,7 @@ function loadFilters(runId) {
         .catch(error => console.error('Error loading cloud providers:', error));
 
     // Load Redis versions
-    fetch(`/api/filters/redis-versions?run_id=${runId}`)
+    fetch(buildUrl(`api/filters/redis-versions?run_id=${runId}`))
         .then(response => response.json())
         .then(data => {
             const select = document.getElementById('redisVersion');
@@ -515,7 +515,7 @@ function loadROITimeline(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/roi-timeline?${params}`)
+    fetch(buildUrl(`api/charts/roi-timeline?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('roiTimelineChart').getContext('2d');
@@ -584,7 +584,7 @@ function loadROITimeline(filters) {
 // ============================================================================
 
 function loadMultiRunComparison() {
-    fetch('/api/charts/multi-run-comparison?limit=10')
+    fetch(buildUrl('api/charts/multi-run-comparison?limit=10'))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('multiRunComparisonChart').getContext('2d');
@@ -645,7 +645,7 @@ function loadMultiRunComparison() {
 }
 
 function loadSavingsVelocity() {
-    fetch('/api/charts/savings-velocity?limit=10')
+    fetch(buildUrl('api/charts/savings-velocity?limit=10'))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('savingsVelocityChart').getContext('2d');
@@ -696,7 +696,7 @@ function loadCloudProviderComparison(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/cloud-provider-comparison?${params}`)
+    fetch(buildUrl(`api/charts/cloud-provider-comparison?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('cloudProviderComparisonChart').getContext('2d');
@@ -767,7 +767,7 @@ function loadInstanceEfficiency(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/instance-efficiency-matrix?${params}`)
+    fetch(buildUrl(`api/charts/instance-efficiency-matrix?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('instanceEfficiencyChart').getContext('2d');
@@ -834,7 +834,7 @@ function loadStorageTypeDistribution(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/storage-type-distribution?${params}`)
+    fetch(buildUrl(`api/charts/storage-type-distribution?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('storageTypeChart').getContext('2d');
@@ -890,7 +890,7 @@ function loadInstanceStorageBreakdown(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/instance-storage-breakdown?${params}`)
+    fetch(buildUrl(`api/charts/instance-storage-breakdown?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('instanceStorageBreakdownChart').getContext('2d');
@@ -950,7 +950,7 @@ function loadRedisVersionAnalysis(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/redis-version-analysis?${params}`)
+    fetch(buildUrl(`api/charts/redis-version-analysis?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('redisVersionChart').getContext('2d');
@@ -1032,7 +1032,7 @@ function loadClusterSizeCorrelation(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/cluster-size-correlation?${params}`)
+    fetch(buildUrl(`api/charts/cluster-size-correlation?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('clusterSizeCorrelationChart').getContext('2d');
@@ -1098,7 +1098,7 @@ function loadRadarChart(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/current-vs-optimal-radar?${params}`)
+    fetch(buildUrl(`api/charts/current-vs-optimal-radar?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('radarChart').getContext('2d');
@@ -1156,7 +1156,7 @@ function loadCurrentVsOptimal(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/current-vs-optimal?${params}`)
+    fetch(buildUrl(`api/charts/current-vs-optimal?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('currentVsOptimalChart').getContext('2d');
@@ -1214,7 +1214,7 @@ function loadParetoChart(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/pareto-cost-drivers?${params}`)
+    fetch(buildUrl(`api/charts/pareto-cost-drivers?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('paretoChart').getContext('2d');
@@ -1282,7 +1282,7 @@ function loadSavingsDistribution(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/savings-distribution?${params}`)
+    fetch(buildUrl(`api/charts/savings-distribution?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('savingsDistributionChart').getContext('2d');
@@ -1334,7 +1334,7 @@ function loadTopClusters(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/top-clusters?${params}`)
+    fetch(buildUrl(`api/charts/top-clusters?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('topClustersChart').getContext('2d');
@@ -1383,7 +1383,7 @@ function loadSavingsBreakdown(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/savings-breakdown?${params}`)
+    fetch(buildUrl(`api/charts/savings-breakdown?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('savingsBreakdownChart').getContext('2d');
@@ -1430,7 +1430,7 @@ function loadOutlierDetection(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/outlier-detection?${params}`)
+    fetch(buildUrl(`api/charts/outlier-detection?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('outlierDetectionChart').getContext('2d');
@@ -1554,7 +1554,7 @@ function loadSavingsHeatmap(filters) {
         redisVersion: filters.redisVersion
     });
 
-    fetch(`/api/charts/savings-heatmap?${params}`)
+    fetch(buildUrl(`api/charts/savings-heatmap?${params}`))
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('savingsHeatmapChart').getContext('2d');

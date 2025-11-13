@@ -56,6 +56,27 @@ PATH_PREFIX = os.environ.get('PATH_PREFIX', '').rstrip('/')
 if PATH_PREFIX:
     app.config['APPLICATION_ROOT'] = PATH_PREFIX
 
+    # Add middleware to handle path prefix
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1)
+
+    # Middleware to strip path prefix from incoming requests
+    class PrefixMiddleware:
+        def __init__(self, app, prefix):
+            self.app = app
+            self.prefix = prefix
+
+        def __call__(self, environ, start_response):
+            # Strip the prefix from PATH_INFO if present
+            if environ['PATH_INFO'].startswith(self.prefix):
+                environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
+                environ['SCRIPT_NAME'] = self.prefix
+                if environ['PATH_INFO'] == '':
+                    environ['PATH_INFO'] = '/'
+            return self.app(environ, start_response)
+
+    app.wsgi_app = PrefixMiddleware(app.wsgi_app, PATH_PREFIX)
+
 # 🟡 FIXED: Configure logging
 logging.basicConfig(
     level=logging.INFO,
