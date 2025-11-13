@@ -522,7 +522,7 @@ def top_savings():
         # Get filters from query params
         cloud_provider_filter = request.args.get('cloud_provider', default='all', type=str)
         redis_version_filter = request.args.get('redis_version', default='all', type=str)
-        top_n_param = request.args.get('top_n', default='20', type=str)
+        top_n_param = request.args.get('top_n', default='all', type=str)
 
         # Parse top_n parameter
         if top_n_param == 'all':
@@ -548,7 +548,7 @@ def top_savings():
                                  cloud_providers=[],
                                  redis_version_filter=redis_version_filter,
                                  redis_versions=[],
-                                 top_n=20)
+                                 top_n='all')
 
         # Get all savings (no limit)
         opportunities = db.get_top_savings_opportunities(run_id=run_id, limit=None)

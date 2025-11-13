@@ -56,9 +56,9 @@
             <div class="col-md-2">
                 <label for="top_n" class="form-label"><i class="bi bi-hash"></i> Top N Clusters</label>
                 <select name="top_n" id="top_n" class="form-select filter-select">
+                    <option value="all" {% if top_n == 'all' %}selected{% endif %}>All</option>
                     <option value="20" {% if top_n == 20 %}selected{% endif %}>20</option>
                     <option value="50" {% if top_n == 50 %}selected{% endif %}>50</option>
-                    <option value="all" {% if top_n == 'all' %}selected{% endif %}>All</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -277,7 +277,7 @@ function applyFilters() {
     if (runId) params.append('run_id', runId);
     if (cloudProvider !== 'all') params.append('cloud_provider', cloudProvider);
     if (redisVersion !== 'all') params.append('redis_version', redisVersion);
-    if (topN !== '20') params.append('top_n', topN);
+    if (topN !== 'all') params.append('top_n', topN);
 
     // Reload page with new filters
     window.location.href = buildUrl('top-savings') + '?' + params.toString();
