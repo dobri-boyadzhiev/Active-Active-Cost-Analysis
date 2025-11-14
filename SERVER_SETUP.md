@@ -1,78 +1,78 @@
 # Active-Active Cost Analysis - Server Setup Guide
-# Пълна документация за настройка на сървъра
+# Complete Server Setup Documentation
 
-## 📋 Преглед
+## 📋 Overview
 
-Този документ описва как да setup-неш и поддържаш AA Cost Analysis automation на production сървър.
+This document describes how to setup and maintain AA Cost Analysis automation on production server.
 
-**Сървър:** `ip-10-0-0-88`  
-**Локация:** `/opt/active-active-cost-analysis/`  
-**Virtual Environment:** `/var/vault-users-python3.11-env/`  
+**Server:** `ip-10-0-0-88`
+**Location:** `/opt/active-active-cost-analysis/`
+**Virtual Environment:** `/var/vault-users-python3.11-env/`
 **GCS Bucket:** `gs://active-active-cost-analysis/`
 
 ---
 
-## 🚀 Първоначална настройка (One-time setup)
+## 🚀 Initial Setup (One-time setup)
 
-### Стъпка 1: Създай директория
+### Step 1: Create Directory
 
 ```bash
 sudo mkdir -p /opt/active-active-cost-analysis/logs
 ```
 
-### Стъпка 2: Копирай файловете
+### Step 2: Copy Files
 
 ```bash
-# От development директория
+# From development directory
 cd ~/path/to/project
 
-# Копирай всички файлове
+# Copy all files
 sudo cp aa_report_automation.py /opt/active-active-cost-analysis/
 sudo cp aa_database.py /opt/active-active-cost-analysis/
 sudo cp requirements.txt /opt/active-active-cost-analysis/
 sudo cp run_aa_report_with_creds.sh /opt/active-active-cost-analysis/
 ```
 
-### Стъпка 3: Настрой wrapper скрипта с credentials
+### Step 3: Configure Wrapper Script with Credentials
 
 ```bash
-# Редактирай wrapper скрипта
+# Edit wrapper script
 sudo nano /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
 
-# Намери този ред (около ред 20):
+# Find this line (around line 20):
 # export RCP_PASSWORD="YOUR_PASSWORD_HERE"
 
-# Замени с реалната парола:
+# Replace with actual password:
 # export RCP_PASSWORD="actual_rcp_password"
 
-# Запази и излез (Ctrl+O, Enter, Ctrl+X)
+# Save and exit (Ctrl+O, Enter, Ctrl+X)
 ```
 
-### Стъпка 4: Направи wrapper executable и защити го
+### Step 4: Make Wrapper Executable and Secure It
 
 ```bash
-# Направи executable
+# Make executable
 sudo chmod 700 /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
 
-# Провери permissions
+# Check permissions
 ls -la /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
-# Трябва да видиш: -rwx------ 1 root root ... run_aa_report_with_creds.sh
+# Should see: -rwx------ 1 root root ... run_aa_report_with_creds.sh
 ```
 
-### Стъпка 5: Тествай
+### Step 5: Test
 
 ```bash
-# Тест с 1 cluster
+# Test with 1 cluster
 cd /opt/active-active-cost-analysis
 sudo ./run_aa_report_with_creds.sh --limit 1
 
-# Провери logs
+# Check logs
 tail -f /opt/active-active-cost-analysis/logs/aa_report_automation_*.log
 
-# Провери database
+# Check database
 ls -lh /opt/active-active-cost-analysis/aa_report_cache.db
 
-# Провери GCS upload
+# Check GCS upload
 gsutil ls gs://active-active-cost-analysis/
 ```
 
@@ -80,55 +80,55 @@ gsutil ls gs://active-active-cost-analysis/
 
 ## ⏰ Cron Job Setup
 
-### Настройка на автоматично изпълнение
+### Configure Automatic Execution
 
 ```bash
-# Отвори crontab (като root)
+# Open crontab (as root)
 sudo crontab -e
 
-# Добави този ред за изпълнение всеки ден в 7:00 UTC:
+# Add this line for daily execution at 7:00 UTC:
 0 7 * * * /opt/active-active-cost-analysis/run_aa_report_with_creds.sh >> /opt/active-active-cost-analysis/logs/cron.log 2>&1
 ```
 
-### Други полезни времена
+### Other Useful Schedules
 
 ```bash
-# Всеки ден в 2:00 UTC
+# Daily at 2:00 UTC
 0 2 * * * /opt/active-active-cost-analysis/run_aa_report_with_creds.sh >> /opt/active-active-cost-analysis/logs/cron.log 2>&1
 
-# Всеки ден в 7:00 UTC
+# Daily at 7:00 UTC
 0 7 * * * /opt/active-active-cost-analysis/run_aa_report_with_creds.sh >> /opt/active-active-cost-analysis/logs/cron.log 2>&1
 
-# Всеки понеделник в 7:00 UTC
+# Every Monday at 7:00 UTC
 0 7 * * 1 /opt/active-active-cost-analysis/run_aa_report_with_creds.sh >> /opt/active-active-cost-analysis/logs/cron.log 2>&1
 ```
 
-### За Bulgaria time (EET/EEST)
+### For Bulgaria Time (EET/EEST)
 
 ```bash
-# Добави в началото на crontab:
+# Add at the beginning of crontab:
 TZ=Europe/Sofia
 
-# После добави job-а:
+# Then add the job:
 0 7 * * * /opt/active-active-cost-analysis/run_aa_report_with_creds.sh >> /opt/active-active-cost-analysis/logs/cron.log 2>&1
 ```
 
-### Провери cron jobs
+### Check Cron Jobs
 
 ```bash
-# Виж активните cron jobs
+# View active cron jobs
 sudo crontab -l
 
-# Провери cron logs
+# Check cron logs
 grep CRON /var/log/syslog | tail -20
 
-# Провери application logs
+# Check application logs
 tail -f /opt/active-active-cost-analysis/logs/cron.log
 ```
 
 ---
 
-## 📂 Файлова структура
+## 📂 File Structure
 
 ```
 /opt/active-active-cost-analysis/
@@ -144,11 +144,11 @@ tail -f /opt/active-active-cost-analysis/logs/cron.log
 
 ---
 
-## 🔧 Конфигурация
+## 🔧 Configuration
 
 ### Wrapper Script Configuration
 
-Всички настройки са в `run_aa_report_with_creds.sh`:
+All settings are in `run_aa_report_with_creds.sh`:
 
 ```bash
 # RCP Server Configuration
@@ -167,28 +167,28 @@ SCRIPT_DIR="/opt/active-active-cost-analysis"
 
 ### Virtual Environment
 
-Скриптът използва shared virtual environment:
+The script uses a shared virtual environment:
 - **Path:** `/var/vault-users-python3.11-env/`
 - **Owner:** `EranCahana:ops`
-- **Съдържа:** `rcp_client`, `rcp_api_client`, `rcp_cli` и други RCP библиотеки
+- **Contains:** `rcp_client`, `rcp_api_client`, `rcp_cli` and other RCP libraries
 
-⚠️ **Важно:** Wrapper скриптът автоматично активира venv, не е нужно да го правиш ръчно!
+⚠️ **Important:** The wrapper script automatically activates venv, no need to do it manually!
 
 ---
 
 ## 🔐 Security & Permissions
 
-### Препоръчителни permissions
+### Recommended Permissions
 
 ```bash
-# Wrapper script (съдържа credentials)
+# Wrapper script (contains credentials)
 -rwx------ 1 root root  run_aa_report_with_creds.sh  # chmod 700
 
-# Python scripts (без credentials)
+# Python scripts (no credentials)
 -rw-r--r-- 1 root root  aa_report_automation.py      # chmod 644
 -rw-r--r-- 1 root root  aa_database.py               # chmod 644
 
-# Database (може да съдържа sensitive data)
+# Database (may contain sensitive data)
 -rw-r--r-- 1 root root  aa_report_cache.db           # chmod 644
 
 # Logs directory
@@ -197,26 +197,26 @@ drwxr-xr-x 2 root root  logs/                        # chmod 755
 
 ### GCS Authentication
 
-Скриптът използва **user credentials** (не service account):
+The script uses **user credentials** (not service account):
 
-1. Временно премахва `GOOGLE_APPLICATION_CREDENTIALS` env var
-2. Използва credentials от `gcloud auth` (user credentials)
-3. Upload-ва database с `gsutil cp`
-4. Връща обратно `GOOGLE_APPLICATION_CREDENTIALS`
+1. Temporarily removes `GOOGLE_APPLICATION_CREDENTIALS` env var
+2. Uses credentials from `gcloud auth` (user credentials)
+3. Uploads database with `gsutil cp`
+4. Restores `GOOGLE_APPLICATION_CREDENTIALS`
 
 ```bash
-# Провери user credentials
+# Check user credentials
 gcloud auth list
 
-# Провери GCS достъп
+# Check GCS access
 gsutil ls gs://active-active-cost-analysis/
 ```
 
 ---
 
-## 📊 Мониторинг и Logs
+## 📊 Monitoring and Logs
 
-### Log файлове
+### Log Files
 
 ```bash
 # Daily application logs
@@ -229,64 +229,64 @@ gsutil ls gs://active-active-cost-analysis/
 /var/log/syslog  # grep CRON
 ```
 
-### Провери последно изпълнение
+### Check Last Execution
 
 ```bash
-# Виж последните logs
+# View recent logs
 tail -100 /opt/active-active-cost-analysis/logs/aa_report_automation_*.log
 
-# Виж cron logs
+# View cron logs
 tail -50 /opt/active-active-cost-analysis/logs/cron.log
 
-# Провери database size
+# Check database size
 ls -lh /opt/active-active-cost-analysis/aa_report_cache.db
 
-# Провери GCS upload timestamp
+# Check GCS upload timestamp
 gsutil ls -l gs://active-active-cost-analysis/aa_report_cache.db
 ```
 
-### Провери database съдържание
+### Check Database Content
 
 ```bash
-# Влез в database
+# Enter database
 sqlite3 /opt/active-active-cost-analysis/aa_report_cache.db
 
-# Виж последните runs
-SELECT run_id, run_timestamp, total_clusters, processed_clusters, status 
-FROM runs 
-ORDER BY run_id DESC 
+# View recent runs
+SELECT run_id, run_timestamp, total_clusters, processed_clusters, status
+FROM runs
+ORDER BY run_id DESC
 LIMIT 5;
 
-# Излез
+# Exit
 .exit
 ```
 
 ---
 
-## 🔄 Ръчно изпълнение
+## 🔄 Manual Execution
 
-### Тест с малък брой clusters
+### Test with Small Number of Clusters
 
 ```bash
 cd /opt/active-active-cost-analysis
 sudo ./run_aa_report_with_creds.sh --limit 5
 ```
 
-### Пълно изпълнение
+### Full Execution
 
 ```bash
 cd /opt/active-active-cost-analysis
 sudo ./run_aa_report_with_creds.sh
 ```
 
-### Debug mode
+### Debug Mode
 
 ```bash
 cd /opt/active-active-cost-analysis
 sudo ./run_aa_report_with_creds.sh --log-level DEBUG --limit 1
 ```
 
-### Без GCS upload
+### Without GCS Upload
 
 ```bash
 cd /opt/active-active-cost-analysis
@@ -297,10 +297,10 @@ ENABLE_GCS_UPLOAD=false sudo ./run_aa_report_with_creds.sh --limit 5
 
 ## 🆘 Troubleshooting
 
-### Problem: "Permission denied" при изпълнение
+### Problem: "Permission denied" on Execution
 
 ```bash
-# Solution: Направи wrapper executable
+# Solution: Make wrapper executable
 sudo chmod +x /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
 ```
 
@@ -323,7 +323,7 @@ sudo nano /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
 # Change to: export RCP_PASSWORD="actual_password"
 ```
 
-### Problem: GCS upload fails
+### Problem: GCS Upload Fails
 
 ```bash
 # Test gsutil manually
@@ -336,7 +336,7 @@ gcloud auth list
 gcloud auth login
 ```
 
-### Problem: Database locked
+### Problem: Database Locked
 
 ```bash
 # Check if another instance is running
@@ -353,40 +353,40 @@ lsof /opt/active-active-cost-analysis/aa_report_cache.db
 
 ## 🔄 Update Process
 
-### Обновяване на кода
+### Updating Code
 
 ```bash
-# 1. Backup текущата версия
+# 1. Backup current version
 sudo cp /opt/active-active-cost-analysis/aa_report_automation.py \
        /opt/active-active-cost-analysis/aa_report_automation.py.backup
 
-# 2. Копирай новата версия
+# 2. Copy new version
 sudo cp ~/new_version/aa_report_automation.py /opt/active-active-cost-analysis/
 
-# 3. Тествай
+# 3. Test
 cd /opt/active-active-cost-analysis
 sudo ./run_aa_report_with_creds.sh --limit 1
 
-# 4. Ако има проблем, върни backup-а
+# 4. If there's a problem, restore backup
 sudo cp /opt/active-active-cost-analysis/aa_report_automation.py.backup \
        /opt/active-active-cost-analysis/aa_report_automation.py
 ```
 
-### Обновяване на credentials
+### Updating Credentials
 
 ```bash
-# Редактирай wrapper
+# Edit wrapper
 sudo nano /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
 
-# Промени RCP_PASSWORD
-# Запази и излез
+# Change RCP_PASSWORD
+# Save and exit
 ```
 
 ---
 
 ## 📞 Quick Reference
 
-### Важни пътища
+### Important Paths
 
 ```bash
 # Application directory
@@ -405,44 +405,44 @@ sudo nano /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
 gs://active-active-cost-analysis/
 ```
 
-### Важни команди
+### Important Commands
 
 ```bash
-# Ръчно изпълнение (test)
+# Manual execution (test)
 sudo ./run_aa_report_with_creds.sh --limit 5
 
-# Ръчно изпълнение (full)
+# Manual execution (full)
 sudo ./run_aa_report_with_creds.sh
 
-# Виж cron jobs
+# View cron jobs
 sudo crontab -l
 
-# Виж logs
+# View logs
 tail -f logs/aa_report_automation_*.log
 
-# Провери GCS
+# Check GCS
 gsutil ls -l gs://active-active-cost-analysis/
 
-# Провери database
+# Check database
 sqlite3 aa_report_cache.db "SELECT COUNT(*) FROM runs;"
 ```
 
 ---
 
-## ✅ Checklist за нов setup
+## ✅ New Setup Checklist
 
-- [ ] Създадена директория `/opt/active-active-cost-analysis/`
-- [ ] Копирани всички файлове
-- [ ] Настроен `run_aa_report_with_creds.sh` с RCP_PASSWORD
-- [ ] Wrapper е `chmod 700`
-- [ ] Тестван с `--limit 1`
-- [ ] Database се създава успешно
-- [ ] GCS upload работи
-- [ ] Cron job е добавен
-- [ ] Logs се записват правилно
+- [ ] Created directory `/opt/active-active-cost-analysis/`
+- [ ] Copied all files
+- [ ] Configured `run_aa_report_with_creds.sh` with RCP_PASSWORD
+- [ ] Wrapper is `chmod 700`
+- [ ] Tested with `--limit 1`
+- [ ] Database created successfully
+- [ ] GCS upload works
+- [ ] Cron job added
+- [ ] Logs are written correctly
 
 ---
 
-**Последна актуализация:** 2025-11-14  
-**Версия:** 1.0
+**Last Updated:** 2025-11-14
+**Version:** 1.0
 

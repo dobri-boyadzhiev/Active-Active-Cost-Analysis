@@ -1,22 +1,22 @@
 # Quick Start Guide - Production Server
 
-## 🚀 За бърза справка на сървъра
+## 🚀 Quick Reference for Production Server
 
-### Локация
+### Location
 ```
 /opt/active-active-cost-analysis/
 ```
 
 ---
 
-## ⚡ Ръчно изпълнение
+## ⚡ Manual Execution
 
 ```bash
-# Тест с 5 clusters
+# Test with 5 clusters
 cd /opt/active-active-cost-analysis
 sudo ./run_aa_report_with_creds.sh --limit 5
 
-# Пълно изпълнение
+# Full execution
 sudo ./run_aa_report_with_creds.sh
 
 # Debug mode
@@ -25,19 +25,19 @@ sudo ./run_aa_report_with_creds.sh --log-level DEBUG --limit 1
 
 ---
 
-## 📊 Провери резултати
+## 📊 Check Results
 
 ```bash
-# Виж logs
+# View logs
 tail -f /opt/active-active-cost-analysis/logs/aa_report_automation_*.log
 
-# Виж cron logs
+# View cron logs
 tail -f /opt/active-active-cost-analysis/logs/cron.log
 
-# Провери database
+# Check database
 ls -lh /opt/active-active-cost-analysis/aa_report_cache.db
 
-# Провери GCS upload
+# Check GCS upload
 gsutil ls -l gs://active-active-cost-analysis/
 ```
 
@@ -46,28 +46,28 @@ gsutil ls -l gs://active-active-cost-analysis/
 ## ⏰ Cron Job
 
 ```bash
-# Виж cron jobs
+# View cron jobs
 sudo crontab -l
 
-# Редактирай cron
+# Edit cron
 sudo crontab -e
 
-# Добави за 7:00 UTC всеки ден:
+# Add for 7:00 UTC daily:
 0 7 * * * /opt/active-active-cost-analysis/run_aa_report_with_creds.sh >> /opt/active-active-cost-analysis/logs/cron.log 2>&1
 ```
 
 ---
 
-## 🔧 Промяна на парола
+## 🔧 Change Password
 
 ```bash
-# Редактирай wrapper
+# Edit wrapper
 sudo nano /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
 
-# Намери и промени:
+# Find and change:
 # export RCP_PASSWORD="your_password"
 
-# Запази: Ctrl+O, Enter, Ctrl+X
+# Save: Ctrl+O, Enter, Ctrl+X
 ```
 
 ---
@@ -93,7 +93,7 @@ sudo pkill -f aa_report_automation.py
 
 ---
 
-## 📚 Пълна документация
+## 📚 Full Documentation
 
-Виж **[SERVER_SETUP.md](SERVER_SETUP.md)** за пълни инструкции!
+See **[SERVER_SETUP.md](SERVER_SETUP.md)** for complete instructions!
 

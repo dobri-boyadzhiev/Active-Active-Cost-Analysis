@@ -4,6 +4,18 @@ All notable changes to the Active-Active Cost Analysis project.
 
 ---
 
+## [2.1.2] - 2025-11-14
+
+### Fixed
+- **Duplicate Chart Removed**: Removed full-width "Cluster Age vs Savings Potential" chart (duplicate of "Age vs Savings Correlation")
+- **URL Path Prefix**: Fixed Runs History table onclick handler to use `buildUrl()` for proper `/aac` prefix support in Load Balancer routing
+
+### Changed
+- **Charts Page**: Kept only "Age vs Savings Correlation" chart, removed redundant full-width version
+- **JavaScript**: Updated onclick handler from direct URL to `buildUrl('top-savings?run_id=...')` for consistent path prefix handling
+
+---
+
 ## [2.1.1] - 2025-11-14
 
 ### Fixed
@@ -25,6 +37,11 @@ All notable changes to the Active-Active Cost Analysis project.
   - Added `software_version` field to `cluster_metadata` table
   - Added `creation_date` field to `cluster_metadata` table
   - Maintained backward compatibility with `redis_version` and `created_at` fields
+- **Dashboard Metrics Updates**:
+  - Added "Total AA Spend" card (replaces "Top Cloud Provider")
+  - Added "Optimization Rate" card (replaces "Avg Savings per Cluster")
+  - Added "Avg Cluster Age" card (replaces "Most Used Instance Type")
+  - Moved "Top Cloud Provider" to operational metrics section
 
 ### Changed
 - **API Endpoints**: Updated all chart endpoints to use `softwareVersion` parameter instead of `redisVersion`
@@ -41,10 +58,9 @@ All notable changes to the Active-Active Cost Analysis project.
 
 ### Documentation
 - Updated `README.md` with new project structure
-- Updated `rcp/README.md` with new database schema
 - Updated `ENVIRONMENT_VARIABLES.md` with database requirements
 - Updated `DEPLOYMENT.md` with schema requirements and Docker notes
-- Added this `CHANGELOG.md` file
+- Added comprehensive documentation suite (QUICKSTART.md, SERVER_SETUP.md, WRAPPER_README.md, DOCS_INDEX.md)
 
 ### Technical Details
 - **Backward Compatibility**: Uses SQL `COALESCE()` to fallback from new fields to legacy fields
@@ -68,6 +84,13 @@ All notable changes to the Active-Active Cost Analysis project.
 ---
 
 ## Migration Guide
+
+### From v2.1.1 to v2.1.2
+
+**No Code Changes Required:**
+- Charts automatically updated
+- URL routing automatically fixed
+- No database changes needed
 
 ### From v2.0.0 to v2.1.0
 
