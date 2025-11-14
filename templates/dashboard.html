@@ -240,7 +240,8 @@
                                 <th>Cluster Name</th>
                                 <th>Region</th>
                                 <th>Cloud Provider</th>
-                                <th>Redis Version</th>
+                                <th>Software Version</th>
+                                <th>Cluster Age</th>
                                 <th class="text-end">Current Price</th>
                                 <th class="text-end">Optimal Price</th>
                                 <th class="text-end">Savings</th>
@@ -275,8 +276,19 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if cluster.redis_version %}
-                                    <span class="badge bg-success">{{ cluster.redis_version }}</span>
+                                    {% if cluster.software_version %}
+                                    <span class="badge bg-success">{{ cluster.software_version }}</span>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cluster.age_days is not none %}
+                                    {% if cluster.age_days >= 365 %}
+                                    <span class="badge bg-warning text-dark">{{ cluster.age_display }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ cluster.age_display }}</span>
+                                    {% endif %}
                                     {% else %}
                                     <small class="text-muted">N/A</small>
                                     {% endif %}

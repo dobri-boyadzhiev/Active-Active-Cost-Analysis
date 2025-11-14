@@ -10,6 +10,7 @@ Complete guide for deploying Active-Active Cost Analysis to Google Cloud Run.
 2. **gcloud CLI** installed and authenticated
 3. **GitHub Repository** with application code
 4. **GCS Bucket** for database storage (create manually)
+5. **Database file** with required schema (see Database Schema Requirements below)
 
 ---
 
@@ -137,6 +138,27 @@ gcloud compute url-maps add-path-matcher YOUR_URL_MAP \
 
 ---
 
+## Database Schema Requirements
+
+The database must have the following schema in `cluster_metadata` table:
+
+```sql
+CREATE TABLE cluster_metadata (
+    mc_uid TEXT PRIMARY KEY,
+    cluster_name TEXT,
+    cloud_provider TEXT,
+    region TEXT,
+    software_version TEXT,      -- Required: Software version
+    creation_date TEXT,          -- Required: Cluster creation date (ISO format)
+    redis_version TEXT,          -- Optional: Legacy field (fallback)
+    created_at TEXT              -- Optional: Legacy field (fallback)
+);
+```
+
+**Important:** The application uses `COALESCE(software_version, redis_version)` for backward compatibility.
+
+---
+
 ## Updating the Database
 
 To update the database with new data:
@@ -196,6 +218,15 @@ Go to [Cloud Run Console](https://console.cloud.google.com/run) → Select servi
    ```
 2. Find service account email in Cloud Run service details
 
+### Missing database columns
+
+**Error**: `no such column: software_version` or `no such column: creation_date`
+
+**Solution**:
+1. Verify database schema includes `software_version` and `creation_date` columns
+2. Update database schema or regenerate database with new schema
+3. See "Database Schema Requirements" section above
+
 ---
 
 ## Security
@@ -232,6 +263,18 @@ gcloud run services update-traffic aa-cost-analysis \
   --region europe-west1 \
   --to-revisions REVISION_NAME=100
 ```
+
+---
+
+## Docker Build Notes
+
+The `.dockerignore` file is configured to:
+- ✅ **Include** `rcp/aa_database.py` (required by the application)
+- ❌ **Exclude** `rcp/aa_report_automation.py` (not needed in Cloud Run)
+- ❌ **Exclude** `*.db` files (database is mounted from GCS)
+- ❌ **Exclude** `*.md` documentation files
+
+This ensures the Docker image contains only necessary files for the web application.
 
 ---
 

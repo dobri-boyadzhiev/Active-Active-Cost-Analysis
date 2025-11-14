@@ -193,6 +193,19 @@ gcloud run services update aa-cost-analysis \
 
 ---
 
+## Database Schema Requirements
+
+The application expects the following fields in `cluster_metadata` table:
+
+- `software_version` (TEXT) - Software version (preferred)
+- `creation_date` (TEXT) - Cluster creation date in ISO format
+- `redis_version` (TEXT) - Legacy field, used as fallback if `software_version` is NULL
+- `created_at` (TEXT) - Legacy field, used as fallback if `creation_date` is NULL
+
+**Backward Compatibility:** The application uses `COALESCE(software_version, redis_version)` to support both old and new data.
+
+---
+
 ## Validation
 
 The application logs configuration on startup:

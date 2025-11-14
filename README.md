@@ -61,9 +61,11 @@ See [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ```
 ├── app.py                    # Flask application
-├── aa_database.py            # Database helper
+├── rcp/
+│   └── aa_database.py        # Database layer
 ├── requirements.txt          # Dependencies
 ├── Dockerfile                # Cloud Run container
+├── .dockerignore             # Docker build exclusions
 ├── static/
 │   ├── css/style.css
 │   └── js/main.js
@@ -97,7 +99,7 @@ SQLite database (`aa_report_cache.db`) stored in GCS bucket with schema:
 - **runs** - Optimization run metadata
 - **cluster_results** - Per-cluster optimization results
 - **cluster_singles** - Current vs optimal configurations
-- **cluster_metadata** - Cloud provider, region, Redis version
+- **cluster_metadata** - Cloud provider, region, software version, creation date
 
 ---
 

@@ -31,8 +31,8 @@ except ImportError:
     print("ℹ️  python-dotenv not installed. Using system environment variables only.")
     print("   Install with: pip install python-dotenv")
 
-# Import database module from current directory
-from aa_database import AADatabase
+# Import database module from rcp directory
+from rcp.aa_database import AADatabase
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -394,6 +394,26 @@ def dashboard():
         # Get top 10 savings
         top_savings = db.get_top_savings_opportunities(run_id=run_id, limit=10)
 
+        # Add cluster age calculation to each cluster
+        from datetime import datetime
+        current_date = datetime.now()
+        for cluster in top_savings:
+            if cluster.get('creation_date'):
+                try:
+                    creation_date = datetime.fromisoformat(cluster['creation_date'].replace('Z', '+00:00'))
+                    days_old = (current_date - creation_date).days
+                    cluster['age_days'] = days_old
+                    if days_old >= 365:
+                        cluster['age_display'] = f"{days_old / 365:.1f} years"
+                    else:
+                        cluster['age_display'] = f"{days_old} days"
+                except (ValueError, AttributeError):
+                    cluster['age_days'] = None
+                    cluster['age_display'] = 'N/A'
+            else:
+                cluster['age_days'] = None
+                cluster['age_display'] = 'N/A'
+
         # Get savings trend (last 10 runs)
         trend = db.get_total_savings_trend(limit=10)
         trend.reverse()  # Oldest to newest for chart
@@ -502,13 +522,30 @@ def cluster_details(mc_uid):
         instance_savings = sum(c['instance_price'] for c in current_clusters) - \
                           sum(c['instance_price'] for c in optimal_clusters)
 
+        # Add cluster age calculation to metadata
+        metadata_dict = dict(metadata) if metadata else None
+        if metadata_dict and metadata_dict.get('creation_date'):
+            from datetime import datetime
+            try:
+                creation_date = datetime.fromisoformat(metadata_dict['creation_date'].replace('Z', '+00:00'))
+                current_date = datetime.now()
+                days_old = (current_date - creation_date).days
+                metadata_dict['age_days'] = days_old
+                if days_old >= 365:
+                    metadata_dict['age_display'] = f"{days_old / 365:.1f} years"
+                else:
+                    metadata_dict['age_display'] = f"{days_old} days"
+            except (ValueError, AttributeError):
+                metadata_dict['age_days'] = None
+                metadata_dict['age_display'] = 'N/A'
+
         return render_template('cluster_details.html',
                              mc_uid=mc_uid,
                              latest_result=dict(latest_result),
                              current_clusters=current_clusters,
                              optimal_clusters=optimal_clusters,
                              history=history,
-                             metadata=dict(metadata) if metadata else None,
+                             metadata=metadata_dict,
                              total_current_instances=total_current_instances,
                              total_optimal_instances=total_optimal_instances,
                              storage_savings=storage_savings,
@@ -526,7 +563,7 @@ def top_savings():
 
         # Get filters from query params
         cloud_provider_filter = request.args.get('cloud_provider', default='all', type=str)
-        redis_version_filter = request.args.get('redis_version', default='all', type=str)
+        software_version_filter = request.args.get('software_version', default='all', type=str)
         top_n_param = request.args.get('top_n', default='all', type=str)
 
         # Parse top_n parameter
@@ -551,12 +588,32 @@ def top_savings():
                                  selected_run=None,
                                  cloud_provider_filter=cloud_provider_filter,
                                  cloud_providers=[],
-                                 redis_version_filter=redis_version_filter,
-                                 redis_versions=[],
+                                 software_version_filter=software_version_filter,
+                                 software_versions=[],
                                  top_n='all')
 
         # Get all savings (no limit)
         opportunities = db.get_top_savings_opportunities(run_id=run_id, limit=None)
+
+        # Add cluster age calculation to each cluster
+        from datetime import datetime
+        current_date = datetime.now()
+        for cluster in opportunities:
+            if cluster.get('creation_date'):
+                try:
+                    creation_date = datetime.fromisoformat(cluster['creation_date'].replace('Z', '+00:00'))
+                    days_old = (current_date - creation_date).days
+                    cluster['age_days'] = days_old
+                    if days_old >= 365:
+                        cluster['age_display'] = f"{days_old / 365:.1f} years"
+                    else:
+                        cluster['age_display'] = f"{days_old} days"
+                except (ValueError, AttributeError):
+                    cluster['age_days'] = None
+                    cluster['age_display'] = 'N/A'
+            else:
+                cluster['age_days'] = None
+                cluster['age_display'] = 'N/A'
 
         # Get ALL unique values (before filtering) for initial dropdown population
         cloud_providers = sorted(list(set(
@@ -564,9 +621,9 @@ def top_savings():
             if opp.get('cloud_provider')
         )))
 
-        redis_versions = sorted(list(set(
-            opp['redis_version'] for opp in opportunities
-            if opp.get('redis_version')
+        software_versions = sorted(list(set(
+            opp['software_version'] for opp in opportunities
+            if opp.get('software_version')
         )), reverse=True)
 
         # Apply filters to opportunities
@@ -576,10 +633,10 @@ def top_savings():
                 if opp.get('cloud_provider') == cloud_provider_filter
             ]
 
-        if redis_version_filter != 'all':
+        if software_version_filter != 'all':
             opportunities = [
                 opp for opp in opportunities
-                if opp.get('redis_version') == redis_version_filter
+                if opp.get('software_version') == software_version_filter
             ]
 
         # Apply top_n limit
@@ -600,8 +657,8 @@ def top_savings():
                              selected_run=dict(selected_run) if selected_run else None,
                              cloud_provider_filter=cloud_provider_filter,
                              cloud_providers=cloud_providers,
-                             redis_version_filter=redis_version_filter,
-                             redis_versions=redis_versions,
+                             software_version_filter=software_version_filter,
+                             software_versions=software_versions,
                              top_n=top_n)
 
 
@@ -736,7 +793,7 @@ def api_dynamic_filters():
     # Get parameters
     run_id = request.args.get('run_id', type=int)
     cloud_provider = request.args.get('cloud_provider', default='all', type=str)
-    redis_version = request.args.get('redis_version', default='all', type=str)
+    software_version = request.args.get('software_version', default='all', type=str)
 
     # 🟡 FIXED: Use helper function
     run_id = get_run_id_or_latest(run_id)
@@ -759,9 +816,9 @@ def api_dynamic_filters():
             where_conditions.append('cm.cloud_provider = ?')
             params.append(cloud_provider)
 
-        if redis_version != 'all':
-            where_conditions.append('cm.redis_version = ?')
-            params.append(redis_version)
+        if software_version != 'all':
+            where_conditions.append('COALESCE(cm.software_version, cm.redis_version) = ?')
+            params.append(software_version)
 
         where_clause = ' AND '.join(where_conditions)
 
@@ -776,22 +833,22 @@ def api_dynamic_filters():
         '''.format(where_clause)
 
         base_query_versions = '''
-            SELECT DISTINCT cm.redis_version
+            SELECT DISTINCT COALESCE(cm.software_version, cm.redis_version) as version
             FROM cluster_metadata cm
             JOIN cluster_results cr ON cm.mc_uid = cr.mc_uid
-            WHERE {} AND cm.redis_version IS NOT NULL AND cm.redis_version != ''
-            ORDER BY cm.redis_version DESC
+            WHERE {} AND COALESCE(cm.software_version, cm.redis_version) IS NOT NULL AND COALESCE(cm.software_version, cm.redis_version) != ''
+            ORDER BY version DESC
         '''.format(where_clause)
 
         # Get cloud providers
         cloud_providers = cursor.execute(base_query_providers, params).fetchall()
 
-        # Get Redis versions
-        redis_versions = cursor.execute(base_query_versions, params).fetchall()
+        # Get Software versions
+        software_versions = cursor.execute(base_query_versions, params).fetchall()
 
         result = {
             'cloud_providers': [cp[0] for cp in cloud_providers],
-            'redis_versions': [rv[0] for rv in redis_versions]
+            'software_versions': [sv[0] for sv in software_versions]
         }
 
         return jsonify(result)
@@ -808,7 +865,7 @@ def api_savings_distribution():
     min_savings = request.args.get('min_savings', default=0, type=float)
     min_percent = request.args.get('min_percent', default=0, type=float)
     cloud_provider = request.args.get('cloud_provider', default='All', type=str)
-    redis_version = request.args.get('redis_version', default='All', type=str)
+    software_version = request.args.get('software_version', default='All', type=str)
 
     if not run_id:
         latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
@@ -835,7 +892,7 @@ def api_savings_distribution():
         # Build query with metadata filters
         query = '''
             SELECT cr.mc_uid, cs.infra_json, cm.cloud_provider, cm.region,
-                   cm.redis_version, cm.storage_type
+                   COALESCE(cm.software_version, cm.redis_version) as software_version, cm.storage_type
             FROM cluster_results cr
             JOIN cluster_singles cs ON cr.result_id = cs.result_id AND cs.cluster_type = 'current'
             LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
@@ -854,9 +911,9 @@ def api_savings_distribution():
             params.extend([min_val, max_val])
 
         # Add metadata filters
-        if redis_version != 'All':
-            query += ' AND cm.redis_version = ?'
-            params.append(redis_version)
+        if software_version != 'All':
+            query += ' AND COALESCE(cm.software_version, cm.redis_version) = ?'
+            params.append(software_version)
 
         results = db.conn.execute(query, params).fetchall()
 
@@ -996,7 +1053,7 @@ def api_top_clusters():
     min_savings = request.args.get('min_savings', default=0, type=float)
     min_percent = request.args.get('min_percent', default=0, type=float)
     cloud_provider = request.args.get('cloud_provider', default='All', type=str)
-    redis_version = request.args.get('redis_version', default='All', type=str)
+    software_version = request.args.get('software_version', default='All', type=str)
 
     if not run_id:
         latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
@@ -1015,7 +1072,7 @@ def api_top_clusters():
             cs.infra_json,
             cm.cloud_provider,
             cm.region,
-            cm.redis_version,
+            COALESCE(cm.software_version, cm.redis_version) as software_version,
             cm.storage_type
         FROM cluster_results cr
         JOIN cluster_singles cs ON cr.result_id = cs.result_id AND cs.cluster_type = 'current'
@@ -1028,9 +1085,9 @@ def api_top_clusters():
     params = [run_id, min_savings, min_percent]
 
     # Add metadata filters
-    if redis_version != 'All':
-        query += ' AND cm.redis_version = ?'
-        params.append(redis_version)
+    if software_version != 'All':
+        query += ' AND COALESCE(cm.software_version, cm.redis_version) = ?'
+        params.append(software_version)
 
     query += ' ORDER BY cr.total_savings DESC'
 
@@ -1112,8 +1169,8 @@ def api_savings_heatmap():
 # HELPER FUNCTIONS
 # ============================================================================
 
-def build_filter_clause(cloud_provider='All', redis_version='All'):
-    """Build WHERE clause and params for filtering by cloud provider and Redis version."""
+def build_filter_clause(cloud_provider='All', software_version='All'):
+    """Build WHERE clause and params for filtering by cloud provider and Software version."""
     where_clauses = []
     params = []
 
@@ -1121,9 +1178,9 @@ def build_filter_clause(cloud_provider='All', redis_version='All'):
         where_clauses.append('cm.cloud_provider = ?')
         params.append(cloud_provider)
 
-    if redis_version != 'All':
-        where_clauses.append('cm.redis_version = ?')
-        params.append(redis_version)
+    if software_version != 'All':
+        where_clauses.append('COALESCE(cm.software_version, cm.redis_version) = ?')
+        params.append(software_version)
 
     return where_clauses, params
 
@@ -1265,7 +1322,7 @@ def api_cloud_provider_comparison():
 
     run_id = request.args.get('run_id', type=int)
     cloud_provider = request.args.get('cloudProvider', default='All')
-    redis_version = request.args.get('redisVersion', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
 
     if not run_id:
         latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
@@ -1276,7 +1333,7 @@ def api_cloud_provider_comparison():
         return jsonify({'providers': [], 'current_instance': [], 'current_storage': [], 'optimal_instance': [], 'optimal_storage': []})
 
     # Build filter clause
-    filter_clauses, filter_params = build_filter_clause(cloud_provider, redis_version)
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
     where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
     where_clause = ' AND '.join(where_clauses)
     params = [run_id] + filter_params
@@ -1336,7 +1393,7 @@ def api_instance_efficiency_matrix():
 
     run_id = request.args.get('run_id', type=int)
     cloud_provider = request.args.get('cloudProvider', default='All')
-    redis_version = request.args.get('redisVersion', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
 
     if not run_id:
         latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
@@ -1347,7 +1404,7 @@ def api_instance_efficiency_matrix():
         return jsonify({'data': []})
 
     # Build filter clause
-    filter_clauses, filter_params = build_filter_clause(cloud_provider, redis_version)
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
     where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
     where_clause = ' AND '.join(where_clauses)
     params = [run_id] + filter_params
@@ -1419,7 +1476,7 @@ def api_storage_type_distribution():
 
     run_id = request.args.get('run_id', type=int)
     cloud_provider = request.args.get('cloudProvider', default='All')
-    redis_version = request.args.get('redisVersion', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
 
     if not run_id:
         latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
@@ -1430,7 +1487,7 @@ def api_storage_type_distribution():
         return jsonify({'storage_types': [], 'cluster_counts': [], 'avg_savings': []})
 
     # Build filter clause
-    filter_clauses, filter_params = build_filter_clause(cloud_provider, redis_version)
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
     where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
     where_clause = ' AND '.join(where_clauses)
     params = [run_id] + filter_params
@@ -1520,9 +1577,9 @@ def api_instance_storage_breakdown():
 # NEW CHART APIs - REDIS VERSION ANALYTICS
 # ============================================================================
 
-@app.route('/api/charts/redis-version-analysis')
-def api_redis_version_analysis():
-    """API: Get Redis version adoption and cost analysis."""
+@app.route('/api/charts/software-version-analysis')
+def api_software_version_analysis():
+    """API: Get Software version adoption and cost analysis."""
     db = AADatabase(DB_PATH)
 
     run_id = request.args.get('run_id', type=int)
@@ -1535,10 +1592,10 @@ def api_redis_version_analysis():
         db.close()
         return jsonify({'versions': [], 'cluster_counts': [], 'avg_cost': [], 'avg_savings_percent': []})
 
-    # Get data grouped by Redis version
+    # Get data grouped by Software version
     results = db.conn.execute('''
         SELECT
-            cm.redis_version,
+            COALESCE(cm.software_version, cm.redis_version) as version,
             COUNT(DISTINCT cr.result_id) as cluster_count,
             AVG(cs.total_price) as avg_cost,
             AVG(cr.savings_percent) as avg_savings_percent
@@ -1546,9 +1603,9 @@ def api_redis_version_analysis():
         LEFT JOIN cluster_singles cs ON cr.result_id = cs.result_id AND cs.cluster_type = 'current'
         LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
         WHERE cr.run_id = ? AND cr.status = 'success'
-        GROUP BY cm.redis_version
-        HAVING cm.redis_version IS NOT NULL
-        ORDER BY cm.redis_version DESC
+        GROUP BY version
+        HAVING version IS NOT NULL
+        ORDER BY version DESC
     ''', (run_id,)).fetchall()
 
     versions = []
@@ -1557,7 +1614,7 @@ def api_redis_version_analysis():
     avg_savings_percent = []
 
     for row in results:
-        versions.append(f"Redis {row['redis_version']}")
+        versions.append(row['version'])
         cluster_counts.append(row['cluster_count'])
         avg_cost.append(round(row['avg_cost'], 2))
         avg_savings_percent.append(round(row['avg_savings_percent'], 2))
@@ -1628,7 +1685,7 @@ def api_roi_timeline():
     run_id = request.args.get('run_id', type=int)
     limit = request.args.get('limit', default=20, type=int)
     cloud_provider = request.args.get('cloudProvider', default='All')
-    redis_version = request.args.get('redisVersion', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
 
     if not run_id:
         latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
@@ -1639,7 +1696,7 @@ def api_roi_timeline():
         return jsonify({'labels': [], 'incremental': [], 'cumulative': []})
 
     # Build filter clause
-    filter_clauses, filter_params = build_filter_clause(cloud_provider, redis_version)
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
     where_clauses = ['cr.run_id = ?', 'cr.status = "success"', 'cr.total_savings > 0'] + filter_clauses
     where_clause = ' AND '.join(where_clauses)
     params = [run_id] + filter_params + [limit]
@@ -1689,7 +1746,7 @@ def api_current_vs_optimal_radar():
 
     run_id = request.args.get('run_id', type=int)
     cloud_provider = request.args.get('cloudProvider', default='All')
-    redis_version = request.args.get('redisVersion', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
 
     if not run_id:
         latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
@@ -1700,7 +1757,7 @@ def api_current_vs_optimal_radar():
         return jsonify({'labels': [], 'current': [], 'optimal': []})
 
     # Build filter clause
-    filter_clauses, filter_params = build_filter_clause(cloud_provider, redis_version)
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
     where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
     where_clause = ' AND '.join(where_clauses)
     params = [run_id] + filter_params
@@ -1868,7 +1925,7 @@ def api_pareto_cost_drivers():
     run_id = request.args.get('run_id', type=int)
     limit = request.args.get('limit', default=20, type=int)
     cloud_provider = request.args.get('cloudProvider', default='All')
-    redis_version = request.args.get('redisVersion', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
 
     if not run_id:
         latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
@@ -1879,7 +1936,7 @@ def api_pareto_cost_drivers():
         return jsonify({'labels': [], 'costs': [], 'cumulative_percent': []})
 
     # Build filter clause
-    filter_clauses, filter_params = build_filter_clause(cloud_provider, redis_version)
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
     where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
     where_clause = ' AND '.join(where_clauses)
     params = [run_id] + filter_params
@@ -1935,7 +1992,7 @@ def api_outlier_detection():
 
     run_id = request.args.get('run_id', type=int)
     cloud_provider = request.args.get('cloudProvider', default='All')
-    redis_version = request.args.get('redisVersion', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
 
     if not run_id:
         latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
@@ -1946,7 +2003,7 @@ def api_outlier_detection():
         return jsonify({'groups': [], 'data': []})
 
     # Build filter clause
-    filter_clauses, filter_params = build_filter_clause(cloud_provider, redis_version)
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
     where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
     where_clause = ' AND '.join(where_clauses)
     params = [run_id] + filter_params
@@ -2051,9 +2108,9 @@ def api_filter_cloud_providers():
     return jsonify({'providers': providers})
 
 
-@app.route('/api/filters/redis-versions')
-def api_filter_redis_versions():
-    """API: Get list of Redis versions for filter."""
+@app.route('/api/filters/software-versions')
+def api_filter_software_versions():
+    """API: Get list of Software versions for filter."""
     db = AADatabase(DB_PATH)
 
     run_id = request.args.get('run_id', type=int)
@@ -2066,16 +2123,16 @@ def api_filter_redis_versions():
         db.close()
         return jsonify({'versions': []})
 
-    # Get unique Redis versions for this run
+    # Get unique Software versions for this run (with fallback to redis_version)
     results = db.conn.execute('''
-        SELECT DISTINCT cm.redis_version
+        SELECT DISTINCT COALESCE(cm.software_version, cm.redis_version) as version
         FROM cluster_results cr
         LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
-        WHERE cr.run_id = ? AND cr.status = 'success' AND cm.redis_version IS NOT NULL
-        ORDER BY cm.redis_version DESC
+        WHERE cr.run_id = ? AND cr.status = 'success' AND COALESCE(cm.software_version, cm.redis_version) IS NOT NULL
+        ORDER BY version DESC
     ''', (run_id,)).fetchall()
 
-    versions = [row['redis_version'] for row in results]
+    versions = [row['version'] for row in results]
 
     db.close()
     return jsonify({'versions': versions})

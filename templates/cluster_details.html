@@ -27,26 +27,43 @@
 <div class="row mb-3">
     <div class="col">
         <div class="d-flex flex-wrap gap-2">
-            <span class="badge bg-primary p-2">
-                <i class="bi bi-hdd"></i> Total Instances: {{ total_current_instances }}
+            <span class="badge bg-warning text-dark p-2">
+                <i class="bi bi-cloud"></i> {{ metadata.cloud_provider }}
             </span>
             <span class="badge bg-info p-2">
                 <i class="bi bi-geo-alt"></i> {{ metadata.region }}
             </span>
             <span class="badge bg-success p-2">
-                <i class="bi bi-database"></i> Redis {{ metadata.redis_version }}
-            </span>
-            <span class="badge bg-warning text-dark p-2">
-                <i class="bi bi-cloud"></i> {{ metadata.cloud_provider }}
+                <i class="bi bi-database"></i> {{ metadata.software_version or metadata.redis_version }}
             </span>
             {% if metadata.multi_az %}
             <span class="badge bg-danger p-2">
                 <i class="bi bi-shield-check"></i> Multi-AZ
             </span>
             {% endif %}
-            <span class="badge bg-secondary p-2">
-                <i class="bi bi-hdd-stack"></i> {{ metadata.storage_type }}
+            <span class="badge bg-primary p-2">
+                <i class="bi bi-hdd"></i> {{ total_current_instances }} Instances
             </span>
+            {% if metadata.total_nodes_count %}
+            <span class="badge bg-primary p-2">
+                <i class="bi bi-server"></i> {{ metadata.total_nodes_count }} Nodes
+            </span>
+            {% endif %}
+            {% if metadata.shards_count %}
+            <span class="badge bg-secondary p-2">
+                <i class="bi bi-diagram-3"></i> {{ metadata.shards_count }} Shards
+            </span>
+            {% endif %}
+            {% if metadata.total_storage_gb %}
+            <span class="badge bg-secondary p-2">
+                <i class="bi bi-hdd-stack"></i> {{ metadata.total_storage_gb }} GB
+            </span>
+            {% endif %}
+            {% if metadata.creation_date %}
+            <span class="badge bg-dark p-2">
+                <i class="bi bi-calendar"></i> Created {{ metadata.creation_date }}
+            </span>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -93,10 +110,10 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <table class="table table-sm">
                             <tr>
-                                <th width="40%">Cluster Name:</th>
+                                <th width="50%">Cluster Name:</th>
                                 <td><code>{{ metadata.cluster_name or 'N/A' }}</code></td>
                             </tr>
                             <tr>
@@ -110,15 +127,39 @@
                                 <td><code>{{ metadata.region or 'N/A' }}</code></td>
                             </tr>
                             <tr>
-                                <th>Redis Version:</th>
-                                <td><span class="badge bg-success">{{ metadata.redis_version or 'N/A' }}</span></td>
+                                <th>Software Version:</th>
+                                <td><span class="badge bg-success">{{ metadata.software_version or metadata.redis_version or 'N/A' }}</span></td>
+                            </tr>
+                            <tr>
+                                <th>OS Version:</th>
+                                <td>
+                                    {% if metadata.os_version %}
+                                    <span class="badge bg-info">Ubuntu {{ metadata.os_version }}</span>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Cluster Age:</th>
+                                <td>
+                                    {% if metadata.age_days is not none %}
+                                    {% if metadata.age_days >= 365 %}
+                                    <span class="badge bg-warning text-dark">{{ metadata.age_display }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ metadata.age_display }}</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
                             </tr>
                         </table>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <table class="table table-sm">
                             <tr>
-                                <th width="40%">Multi-AZ:</th>
+                                <th width="50%">Multi-AZ:</th>
                                 <td>
                                     {% if metadata.multi_az %}
                                         <span class="badge bg-success"><i class="bi bi-check-circle"></i> Enabled</span>
@@ -134,6 +175,70 @@
                             <tr>
                                 <th>Storage Type:</th>
                                 <td><code>{{ metadata.storage_type or 'N/A' }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Total Storage:</th>
+                                <td>
+                                    {% if metadata.total_storage_gb %}
+                                    <strong>{{ metadata.total_storage_gb }} GB</strong>
+                                    {% if metadata.total_storage_gb >= 1000 %}
+                                    <small class="text-muted">({{ "%.2f"|format(metadata.total_storage_gb / 1024) }} TB)</small>
+                                    {% endif %}
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>ROF (Redis on Flash):</th>
+                                <td>
+                                    {% if metadata.rof_enabled %}
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-lightning-fill"></i> Enabled</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Disabled</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-4">
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="50%">Creation Date:</th>
+                                <td>
+                                    {% if metadata.creation_date %}
+                                    <strong>{{ metadata.creation_date }}</strong>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Shards:</th>
+                                <td>
+                                    {% if metadata.shards_count and metadata.max_shards_count %}
+                                    <strong>{{ metadata.shards_count }}</strong> / {{ metadata.max_shards_count }}
+                                    {% set utilization = (metadata.shards_count / metadata.max_shards_count * 100) | round(1) %}
+                                    <small class="text-muted">({{ utilization }}%)</small>
+                                    {% elif metadata.shards_count %}
+                                    <strong>{{ metadata.shards_count }}</strong>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Total Nodes:</th>
+                                <td>
+                                    {% if metadata.total_nodes_count %}
+                                    <strong>{{ metadata.total_nodes_count }}</strong>
+                                    {% if metadata.data_nodes_count is not none and metadata.quorum_nodes_count is not none %}
+                                    <small class="text-muted">({{ metadata.data_nodes_count }} data + {{ metadata.quorum_nodes_count }} quorum)</small>
+                                    {% endif %}
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
                             </tr>
                             <tr>
                                 <th>Last Updated:</th>

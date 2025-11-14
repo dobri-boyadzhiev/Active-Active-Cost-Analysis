@@ -43,12 +43,12 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="redis_version" class="form-label"><i class="bi bi-database"></i> Redis Version</label>
-                <select name="redis_version" id="redis_version" class="form-select filter-select">
-                    <option value="all" {% if redis_version_filter == 'all' %}selected{% endif %}>All Versions</option>
-                    {% for version in redis_versions %}
-                    <option value="{{ version }}" {% if redis_version_filter == version %}selected{% endif %}>
-                        Redis {{ version }}
+                <label for="software_version" class="form-label"><i class="bi bi-database"></i> Software Version</label>
+                <select name="software_version" id="software_version" class="form-select filter-select">
+                    <option value="all" {% if software_version_filter == 'all' %}selected{% endif %}>All Versions</option>
+                    {% for version in software_versions %}
+                    <option value="{{ version }}" {% if software_version_filter == version %}selected{% endif %}>
+                        {{ version }}
                     </option>
                     {% endfor %}
                 </select>
@@ -88,7 +88,8 @@
                                 <th>Cluster Name</th>
                                 <th>Region</th>
                                 <th>Cloud Provider</th>
-                                <th>Redis Version</th>
+                                <th>Software Version</th>
+                                <th>Cluster Age</th>
                                 <th class="text-end">Current Price</th>
                                 <th class="text-end">Optimal Price</th>
                                 <th class="text-end">Savings</th>
@@ -123,8 +124,19 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if cluster.redis_version %}
-                                    <span class="badge bg-success">{{ cluster.redis_version }}</span>
+                                    {% if cluster.software_version %}
+                                    <span class="badge bg-success">{{ cluster.software_version }}</span>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cluster.age_days is not none %}
+                                    {% if cluster.age_days >= 365 %}
+                                    <span class="badge bg-warning text-dark">{{ cluster.age_display }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ cluster.age_display }}</span>
+                                    {% endif %}
                                     {% else %}
                                     <small class="text-muted">N/A</small>
                                     {% endif %}
@@ -159,7 +171,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-warning fw-bold">
-                                <td colspan="6">TOTAL</td>
+                                <td colspan="7">TOTAL</td>
                                 <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='current_price')) }}</td>
                                 <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='optimal_price')) }}</td>
                                 <td class="text-end">
@@ -298,14 +310,14 @@ const filterSelects = document.querySelectorAll('.filter-select');
 function applyFilters() {
     const runId = document.getElementById('run_id').value;
     const cloudProvider = document.getElementById('cloud_provider').value;
-    const redisVersion = document.getElementById('redis_version').value;
+    const softwareVersion = document.getElementById('software_version').value;
     const topN = document.getElementById('top_n').value;
 
     // Build URL with parameters
     const params = new URLSearchParams();
     if (runId) params.append('run_id', runId);
     if (cloudProvider !== 'all') params.append('cloud_provider', cloudProvider);
-    if (redisVersion !== 'all') params.append('redis_version', redisVersion);
+    if (softwareVersion !== 'all') params.append('software_version', softwareVersion);
     if (topN !== 'all') params.append('top_n', topN);
 
     // Reload page with new filters
