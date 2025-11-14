@@ -61,8 +61,8 @@ See [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ```
 ├── app.py                    # Flask application
-├── rcp/
-│   └── aa_database.py        # Database layer
+├── aa_database.py            # Database layer
+├── aa_report_automation.py   # Automation script (excluded from Docker)
 ├── requirements.txt          # Dependencies
 ├── Dockerfile                # Cloud Run container
 ├── .dockerignore             # Docker build exclusions

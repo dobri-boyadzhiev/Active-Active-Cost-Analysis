@@ -4,6 +4,15 @@ All notable changes to the Active-Active Cost Analysis project.
 
 ---
 
+## [2.1.1] - 2025-11-14
+
+### Fixed
+- **Module Import Error**: Moved `aa_database.py` and `aa_report_automation.py` from `rcp/` to root directory
+- **Docker Build**: Simplified `.dockerignore` to exclude only `aa_report_automation.py` and `rcp/` folder
+- **Import Statement**: Changed from `from rcp.aa_database import AADatabase` to `from aa_database import AADatabase`
+
+---
+
 ## [2.1.0] - 2025-11-14
 
 ### Added

@@ -39,9 +39,11 @@ wheels/
 .env
 .env.local
 
-# Documentation
-README.md
-*.md
+# Documentation (exclude from root, but keep rcp/README.md)
+/README.md
+/CHANGELOG.md
+/DEPLOYMENT.md
+/ENVIRONMENT_VARIABLES.md
 
 # Tests
 tests/
@@ -60,9 +62,9 @@ test_*.py
 *.sqlite
 *.sqlite3
 
-# RCP automation scripts (not needed in Docker, but keep aa_database.py)
-rcp/aa_report_automation.py
-rcp/__pycache__/
+# RCP automation scripts (not needed in Docker)
+aa_report_automation.py
+rcp/
 
 # Other
 *.iml

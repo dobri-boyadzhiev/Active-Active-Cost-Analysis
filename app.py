@@ -31,8 +31,8 @@ except ImportError:
     print("ℹ️  python-dotenv not installed. Using system environment variables only.")
     print("   Install with: pip install python-dotenv")
 
-# Import database module from rcp directory
-from rcp.aa_database import AADatabase
+# Import database module
+from aa_database import AADatabase
 
 # Initialize Flask app
 app = Flask(__name__)

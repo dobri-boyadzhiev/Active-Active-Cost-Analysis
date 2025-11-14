@@ -269,10 +269,11 @@ gcloud run services update-traffic aa-cost-analysis \
 ## Docker Build Notes
 
 The `.dockerignore` file is configured to:
-- ✅ **Include** `rcp/aa_database.py` (required by the application)
-- ❌ **Exclude** `rcp/aa_report_automation.py` (not needed in Cloud Run)
+- ✅ **Include** `aa_database.py` (required by the application)
+- ❌ **Exclude** `aa_report_automation.py` (automation script, not needed in Cloud Run)
+- ❌ **Exclude** `rcp/` folder (legacy location)
 - ❌ **Exclude** `*.db` files (database is mounted from GCS)
-- ❌ **Exclude** `*.md` documentation files
+- ❌ **Exclude** documentation files from root
 
 This ensures the Docker image contains only necessary files for the web application.
 
