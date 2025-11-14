@@ -38,7 +38,7 @@
                 <label for="runSelect" class="form-label"><i class="bi bi-calendar3"></i> Run / Date</label>
                 <select class="form-select filter-select" id="runSelect">
                     {% for run in all_runs %}
-                    <option value="{{ run.run_id }}" {% if loop.first %}selected{% endif %}>
+                    <option value="{{ run.run_id }}" {% if latest_run and run.run_id == latest_run.run_id %}selected{% endif %}>
                         Run #{{ run.run_id }} - {{ run.run_timestamp[:10] }}
                     </option>
                     {% endfor %}
