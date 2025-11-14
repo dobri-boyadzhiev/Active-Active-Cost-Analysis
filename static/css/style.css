@@ -569,6 +569,11 @@ a:hover {
     box-shadow: 0 4px 12px rgba(108, 117, 125, 0.15);
 }
 
+.card.border-dark:hover {
+    border-color: #343a40 !important;
+    box-shadow: 0 4px 12px rgba(52, 58, 64, 0.15);
+}
+
 /* Compact metric cards - INCREASED FONT SIZES */
 .metric-card-body {
     padding: 0.5rem 0.75rem !important; /* Symmetric top/bottom padding */

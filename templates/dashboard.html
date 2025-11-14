@@ -81,20 +81,20 @@
         </div>
 
         <div class="col-md-3">
-            <div class="card border-primary shadow-sm h-100">
+            <div class="card border-dark shadow-sm h-100">
                 <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
                     <div class="metric-card-title text-muted">
-                        <i class="bi bi-cloud-fill text-primary"></i> Top Cloud Provider
+                        <i class="bi bi-cash-stack text-dark"></i> Total AA Spend
                         <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
                            data-bs-toggle="popover"
                            data-bs-trigger="hover focus"
                            data-bs-placement="top"
                            data-bs-html="true"
-                           data-bs-content="<strong>Calculation:</strong><br>Cloud provider with the highest total monthly cost<br><br><strong>Purpose:</strong> Identifies which cloud provider accounts for the largest portion of your AA infrastructure spend.<br><br>Focus optimization efforts on the most expensive provider for maximum impact."></i>
+                           data-bs-content="<strong>Calculation:</strong><br>Sum of all current monthly costs for Active-Active clusters<br><br><strong>Purpose:</strong> Provides context for savings potential - shows total infrastructure spend.<br><br>Savings of ${{ '{:,.0f}'.format(metrics.monthly_savings) }} represents {{ '{:.1f}'.format((metrics.monthly_savings / metrics.total_aa_spend * 100) if metrics.total_aa_spend > 0 else 0) }}% of total spend."></i>
                     </div>
-                    <div class="metric-card-number text-primary">{{ metrics.top_cloud_provider }}</div>
+                    <div class="metric-card-number text-dark">${{ "{:,.0f}".format(metrics.total_aa_spend) }}</div>
                     <div class="metric-card-description text-muted">
-                        <i class="bi bi-cash-stack"></i> ${{ "{:,.0f}".format(metrics.top_cloud_provider_cost) }} ({{ "{:.0f}".format(metrics.top_cloud_provider_percentage) }}%)
+                        <i class="bi bi-server"></i> {{ metrics.total_clusters }} total clusters
                     </div>
                 </div>
             </div>
@@ -104,17 +104,17 @@
             <div class="card border-info shadow-sm h-100">
                 <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
                     <div class="metric-card-title text-muted">
-                        <i class="bi bi-calculator text-info"></i> Avg Savings per Cluster
+                        <i class="bi bi-speedometer text-info"></i> Optimization Rate
                         <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
                            data-bs-toggle="popover"
                            data-bs-trigger="hover focus"
                            data-bs-placement="top"
                            data-bs-html="true"
-                           data-bs-content="<strong>Calculation:</strong><br>Total Monthly Savings / Number of Optimizable Clusters<br><br><strong>Median:</strong> The middle value when all cluster savings are sorted - helps identify typical savings per cluster.<br><br>Use this to prioritize which clusters to optimize first."></i>
+                           data-bs-content="<strong>Calculation:</strong><br>(Optimizable Clusters / Total Clusters) × 100<br><br><strong>Purpose:</strong> Shows what percentage of your fleet can be optimized for cost savings.<br><br>Higher rate = more opportunities for optimization."></i>
                     </div>
-                    <div class="metric-card-number text-info">${{ "{:,.0f}".format(metrics.avg_savings_per_cluster) }}</div>
+                    <div class="metric-card-number text-info">{{ "{:.0f}".format(metrics.optimization_rate) }}%</div>
                     <div class="metric-card-description text-muted">
-                        <i class="bi bi-bar-chart"></i> Median: ${{ "{:,.0f}".format(metrics.median_savings) }}
+                        <i class="bi bi-check-circle"></i> {{ metrics.optimizable_clusters }}/{{ metrics.total_clusters }} clusters
                     </div>
                 </div>
             </div>
@@ -167,55 +167,41 @@
         </div>
 
         <div class="col-md-3">
-            <div class="card border-secondary shadow-sm h-100">
+            <div class="card border-warning shadow-sm h-100">
                 <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
                     <div class="metric-card-title text-muted">
-                        <i class="bi bi-cpu text-secondary"></i> Most Used Instance Type
+                        <i class="bi bi-calendar-check text-warning"></i> Avg Cluster Age
                         <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
                            data-bs-toggle="popover"
                            data-bs-trigger="hover focus"
                            data-bs-placement="top"
                            data-bs-html="true"
-                           data-bs-content="<strong>Calculation:</strong><br>Instance type used by the most clusters across your infrastructure<br><br><strong>Purpose:</strong> Identifies the most common instance type for targeted optimization.<br><br>Optimizing this instance type will impact the largest number of clusters."></i>
+                           data-bs-content="<strong>Calculation:</strong><br>Average age of all clusters since creation date<br><br><strong>Purpose:</strong> Older clusters are more likely to be over-provisioned or using outdated instance types.<br><br>Focus on older clusters for optimization opportunities."></i>
                     </div>
-                    <div class="metric-card-number text-secondary">{{ metrics.most_used_instance }}</div>
+                    <div class="metric-card-number text-warning">{{ metrics.avg_cluster_age_display }}</div>
                     <div class="metric-card-description text-muted">
-                        <i class="bi bi-server"></i> {{ metrics.most_used_instance_count }} clusters • Avg: ${{ "{:,.0f}".format(metrics.most_used_instance_avg_cost) }}/mo
+                        <i class="bi bi-hourglass-split"></i> Oldest: {{ "{:.0f}".format(metrics.oldest_cluster_days / 365) }} years
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3">
-            <div class="card border-info shadow-sm h-100">
+            <div class="card border-primary shadow-sm h-100">
                 <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
                     <div class="metric-card-title text-muted">
-                        <i class="bi bi-cloud-fill text-info"></i> Clusters by Cloud Provider
+                        <i class="bi bi-cloud-fill text-primary"></i> Top Cloud Provider
                         <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
                            data-bs-toggle="popover"
                            data-bs-trigger="hover focus"
                            data-bs-placement="top"
                            data-bs-html="true"
-                           data-bs-content="<strong>Calculation:</strong><br>Distribution of clusters across cloud providers<br><br><strong>Purpose:</strong> Shows multi-cloud infrastructure distribution.<br><br>Helps identify which providers to focus optimization efforts on."></i>
+                           data-bs-content="<strong>Calculation:</strong><br>Cloud provider with the most clusters in your infrastructure<br><br><strong>Purpose:</strong> Identifies primary cloud platform for AA deployments.<br><br>Helps focus optimization efforts and understand multi-cloud distribution."></i>
                     </div>
-                    {% if metrics.top_providers|length >= 2 %}
-                    <div class="metric-card-number text-info" style="font-size: 1.5rem;">
-                        {{ metrics.top_providers[0].name }}: {{ metrics.top_providers[0].count }}
-                    </div>
+                    <div class="metric-card-number text-primary">{{ metrics.top_cloud_provider }}</div>
                     <div class="metric-card-description text-muted">
-                        <i class="bi bi-pie-chart-fill"></i> {{ metrics.top_providers[1].name }}: {{ metrics.top_providers[1].count }} ({{ "{:.0f}".format(metrics.top_providers[0].percentage) }}% / {{ "{:.0f}".format(metrics.top_providers[1].percentage) }}%)
+                        <i class="bi bi-server"></i> {{ metrics.top_cloud_provider_count }} clusters ({{ "{:.0f}".format(metrics.top_cloud_provider_percentage) }}%)
                     </div>
-                    {% elif metrics.top_providers|length == 1 %}
-                    <div class="metric-card-number text-info">{{ metrics.top_providers[0].name }}</div>
-                    <div class="metric-card-description text-muted">
-                        <i class="bi bi-server"></i> {{ metrics.top_providers[0].count }} clusters (100%)
-                    </div>
-                    {% else %}
-                    <div class="metric-card-number text-info">N/A</div>
-                    <div class="metric-card-description text-muted">
-                        <i class="bi bi-info-circle"></i> No provider data
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>

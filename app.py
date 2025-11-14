@@ -343,6 +343,55 @@ def dashboard():
         metrics['most_used_instance_count'] = most_used_count
         metrics['most_used_instance_avg_cost'] = round(most_used_avg_cost, 2)
 
+        # 🆕 NEW METRICS: Total AA Spend
+        metrics['total_aa_spend'] = round(total_current, 2)
+
+        # 🆕 NEW METRICS: Average Cluster Age
+        age_data = db.conn.execute('''
+            SELECT cm.creation_date
+            FROM cluster_results cr
+            LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+            WHERE cr.run_id = ? AND cr.status = 'success' AND cm.creation_date IS NOT NULL
+        ''', (run_id,)).fetchall()
+
+        if age_data:
+            from datetime import datetime
+            current_date = datetime.now()
+            ages_in_days = []
+
+            for row in age_data:
+                try:
+                    creation_date = datetime.fromisoformat(row['creation_date'].replace('Z', '+00:00'))
+                    days_old = (current_date - creation_date).days
+                    ages_in_days.append(days_old)
+                except (ValueError, AttributeError):
+                    pass
+
+            if ages_in_days:
+                avg_age_days = sum(ages_in_days) / len(ages_in_days)
+                metrics['avg_cluster_age_days'] = round(avg_age_days, 0)
+
+                # Format display
+                if avg_age_days >= 365:
+                    metrics['avg_cluster_age_display'] = f"{avg_age_days / 365:.1f} years"
+                elif avg_age_days >= 30:
+                    metrics['avg_cluster_age_display'] = f"{avg_age_days / 30:.0f} months"
+                else:
+                    metrics['avg_cluster_age_display'] = f"{avg_age_days:.0f} days"
+
+                # Oldest cluster
+                metrics['oldest_cluster_days'] = max(ages_in_days)
+            else:
+                metrics['avg_cluster_age_days'] = 0
+                metrics['avg_cluster_age_display'] = 'N/A'
+                metrics['oldest_cluster_days'] = 0
+        else:
+            metrics['avg_cluster_age_days'] = 0
+            metrics['avg_cluster_age_display'] = 'N/A'
+            metrics['oldest_cluster_days'] = 0
+
+        # Note: Top Cloud Provider metrics are calculated below in the provider_stats section
+
         # Calculate clusters by cloud provider
         provider_stats = db.conn.execute('''
             SELECT
