@@ -6,15 +6,18 @@
 // Document ready
 $(document).ready(function() {
     console.log('AA Report Dashboard initialized');
-    
+
     // Initialize tooltips
     initTooltips();
-    
+
     // Add table row click handlers
     addTableClickHandlers();
-    
+
     // Format numbers
     formatNumbers();
+
+    // Initialize back to top button
+    initBackToTop();
 });
 
 /**
@@ -196,15 +199,41 @@ function addCopyButtons() {
     $('code').each(function() {
         const $code = $(this);
         const text = $code.text();
-        
+
         const $copyBtn = $('<button class="btn btn-sm btn-outline-secondary ms-2" title="Copy to clipboard">')
             .html('<i class="bi bi-clipboard"></i>')
             .on('click', function(e) {
                 e.stopPropagation();
                 copyToClipboard(text);
             });
-        
+
         $code.after($copyBtn);
+    });
+}
+
+/**
+ * Initialize Back to Top button
+ */
+function initBackToTop() {
+    const backToTopBtn = document.getElementById('backToTopBtn');
+
+    if (!backToTopBtn) return;
+
+    // Show/hide button based on scroll position
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            backToTopBtn.style.display = 'block';
+        } else {
+            backToTopBtn.style.display = 'none';
+        }
+    });
+
+    // Scroll to top when clicked
+    backToTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
     });
 }
 
