@@ -1189,6 +1189,150 @@ def build_filter_clause(cloud_provider='All', software_version='All'):
 # NEW CHART APIs - TIME-BASED ANALYTICS
 # ============================================================================
 
+@app.route('/api/charts/cluster-age-distribution')
+def api_cluster_age_distribution():
+    """API: Get cluster age distribution histogram data."""
+    from datetime import datetime
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'age_ranges': [], 'cluster_counts': [], 'total_savings': []})
+
+    # Build filter clause
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get clusters with creation dates
+    query = '''
+        SELECT
+            COALESCE(cm.creation_date, cm.created_at) as creation_date,
+            cr.total_savings
+        FROM cluster_results cr
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+        AND COALESCE(cm.creation_date, cm.created_at) IS NOT NULL
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    # Calculate age and categorize
+    age_buckets = {
+        '0-6 months': {'count': 0, 'savings': 0},
+        '6-12 months': {'count': 0, 'savings': 0},
+        '1-2 years': {'count': 0, 'savings': 0},
+        '2-3 years': {'count': 0, 'savings': 0},
+        '3+ years': {'count': 0, 'savings': 0}
+    }
+
+    now = datetime.now()
+    for row in results:
+        try:
+            creation_date = datetime.fromisoformat(row['creation_date'].replace('Z', '+00:00'))
+            age_days = (now - creation_date).days
+
+            if age_days < 180:
+                bucket = '0-6 months'
+            elif age_days < 365:
+                bucket = '6-12 months'
+            elif age_days < 730:
+                bucket = '1-2 years'
+            elif age_days < 1095:
+                bucket = '2-3 years'
+            else:
+                bucket = '3+ years'
+
+            age_buckets[bucket]['count'] += 1
+            age_buckets[bucket]['savings'] += row['total_savings']
+        except (ValueError, AttributeError):
+            continue
+
+    # Prepare response
+    age_ranges = list(age_buckets.keys())
+    cluster_counts = [age_buckets[r]['count'] for r in age_ranges]
+    total_savings = [round(age_buckets[r]['savings'], 2) for r in age_ranges]
+
+    db.close()
+    return jsonify({
+        'age_ranges': age_ranges,
+        'cluster_counts': cluster_counts,
+        'total_savings': total_savings
+    })
+
+
+@app.route('/api/charts/age-vs-savings-correlation')
+def api_age_vs_savings_correlation():
+    """API: Get age vs savings correlation scatter plot data."""
+    from datetime import datetime
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'data': []})
+
+    # Build filter clause
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get clusters with creation dates and savings
+    query = '''
+        SELECT
+            cm.cluster_name,
+            COALESCE(cm.creation_date, cm.created_at) as creation_date,
+            cr.total_savings,
+            cr.savings_percent,
+            cm.cloud_provider,
+            COALESCE(cm.software_version, cm.redis_version) as software_version
+        FROM cluster_results cr
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+        AND COALESCE(cm.creation_date, cm.created_at) IS NOT NULL
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    # Calculate age for each cluster
+    scatter_data = []
+    now = datetime.now()
+
+    for row in results:
+        try:
+            creation_date = datetime.fromisoformat(row['creation_date'].replace('Z', '+00:00'))
+            age_days = (now - creation_date).days
+
+            scatter_data.append({
+                'x': age_days,  # Age in days
+                'y': round(row['total_savings'], 2),  # Total savings
+                'label': row['cluster_name'] or 'Unknown',
+                'savings_percent': round(row['savings_percent'], 1),
+                'cloud_provider': row['cloud_provider'],
+                'software_version': row['software_version']
+            })
+        except (ValueError, AttributeError):
+            continue
+
+    db.close()
+    return jsonify({'data': scatter_data})
+
+
 @app.route('/api/charts/multi-run-comparison')
 def api_multi_run_comparison():
     """API: Get multi-run comparison data for line chart."""
@@ -1379,6 +1523,62 @@ def api_cloud_provider_comparison():
         'optimal_instance': optimal_instance,
         'optimal_storage': optimal_storage
     })
+
+
+@app.route('/api/charts/regional-savings-heatmap')
+def api_regional_savings_heatmap():
+    """API: Get regional savings heatmap data."""
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'regions': [], 'providers': [], 'data': []})
+
+    # Build filter clause
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get data grouped by region and cloud provider
+    query = '''
+        SELECT
+            cm.region,
+            cm.cloud_provider,
+            SUM(cr.total_savings) as total_savings,
+            COUNT(*) as cluster_count,
+            AVG(cr.savings_percent) as avg_savings_percent
+        FROM cluster_results cr
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+        AND cm.region IS NOT NULL
+        AND cm.cloud_provider IS NOT NULL
+        GROUP BY cm.region, cm.cloud_provider
+        ORDER BY total_savings DESC
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    # Organize data for heatmap
+    heatmap_data = []
+    for row in results:
+        heatmap_data.append({
+            'region': row['region'],
+            'provider': row['cloud_provider'],
+            'savings': round(row['total_savings'], 2),
+            'cluster_count': row['cluster_count'],
+            'avg_savings_percent': round(row['avg_savings_percent'], 1)
+        })
+
+    db.close()
+    return jsonify({'data': heatmap_data})
 
 
 # ============================================================================
@@ -1628,6 +1828,74 @@ def api_software_version_analysis():
     })
 
 
+@app.route('/api/charts/software-version-age-analysis')
+def api_software_version_age_analysis():
+    """API: Get software version age analysis bubble chart data."""
+    from datetime import datetime
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'data': []})
+
+    # Build filter clause
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get clusters with version, age, and savings
+    query = '''
+        SELECT
+            cm.cluster_name,
+            COALESCE(cm.software_version, cm.redis_version) as software_version,
+            COALESCE(cm.creation_date, cm.created_at) as creation_date,
+            cr.total_savings,
+            cr.savings_percent,
+            cm.cloud_provider,
+            cm.region
+        FROM cluster_results cr
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+        AND COALESCE(cm.software_version, cm.redis_version) IS NOT NULL
+        AND COALESCE(cm.creation_date, cm.created_at) IS NOT NULL
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    # Calculate age and prepare bubble data
+    bubble_data = []
+    now = datetime.now()
+
+    for row in results:
+        try:
+            creation_date = datetime.fromisoformat(row['creation_date'].replace('Z', '+00:00'))
+            age_days = (now - creation_date).days
+
+            bubble_data.append({
+                'x': row['software_version'],  # Software version
+                'y': age_days,  # Age in days
+                'r': round(row['total_savings'] / 100, 1),  # Bubble size (scaled down)
+                'label': row['cluster_name'] or 'Unknown',
+                'savings': round(row['total_savings'], 2),
+                'savings_percent': round(row['savings_percent'], 1),
+                'cloud_provider': row['cloud_provider'],
+                'region': row['region']
+            })
+        except (ValueError, AttributeError):
+            continue
+
+    db.close()
+    return jsonify({'data': bubble_data})
+
+
 # ============================================================================
 # NEW CHART APIs - CLUSTER SIZE & COMPLEXITY
 # ============================================================================
@@ -1671,6 +1939,98 @@ def api_cluster_size_correlation():
 
     db.close()
     return jsonify({'data': scatter_data})
+
+
+@app.route('/api/charts/shards-count-distribution')
+def api_shards_count_distribution():
+    """API: Get shards count distribution histogram data."""
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'shard_ranges': [], 'cluster_counts': [], 'avg_savings': [], 'utilization': []})
+
+    # Build filter clause
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get clusters with shards count
+    query = '''
+        SELECT
+            cm.shards_count,
+            cm.max_shards_count,
+            cr.total_savings,
+            cm.cluster_name
+        FROM cluster_results cr
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+        AND cm.shards_count IS NOT NULL
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    # Categorize by shard count ranges
+    shard_buckets = {
+        '1-10 shards': {'count': 0, 'savings': [], 'utilization': []},
+        '11-50 shards': {'count': 0, 'savings': [], 'utilization': []},
+        '51-100 shards': {'count': 0, 'savings': [], 'utilization': []},
+        '101-200 shards': {'count': 0, 'savings': [], 'utilization': []},
+        '200+ shards': {'count': 0, 'savings': [], 'utilization': []}
+    }
+
+    for row in results:
+        shards = row['shards_count']
+        max_shards = row['max_shards_count']
+
+        if shards <= 10:
+            bucket = '1-10 shards'
+        elif shards <= 50:
+            bucket = '11-50 shards'
+        elif shards <= 100:
+            bucket = '51-100 shards'
+        elif shards <= 200:
+            bucket = '101-200 shards'
+        else:
+            bucket = '200+ shards'
+
+        shard_buckets[bucket]['count'] += 1
+        shard_buckets[bucket]['savings'].append(row['total_savings'])
+
+        # Calculate utilization percentage
+        if max_shards and max_shards > 0:
+            utilization = (shards / max_shards) * 100
+            shard_buckets[bucket]['utilization'].append(utilization)
+
+    # Prepare response
+    shard_ranges = list(shard_buckets.keys())
+    cluster_counts = [shard_buckets[r]['count'] for r in shard_ranges]
+    avg_savings = [
+        round(sum(shard_buckets[r]['savings']) / len(shard_buckets[r]['savings']), 2)
+        if shard_buckets[r]['savings'] else 0
+        for r in shard_ranges
+    ]
+    avg_utilization = [
+        round(sum(shard_buckets[r]['utilization']) / len(shard_buckets[r]['utilization']), 1)
+        if shard_buckets[r]['utilization'] else 0
+        for r in shard_ranges
+    ]
+
+    db.close()
+    return jsonify({
+        'shard_ranges': shard_ranges,
+        'cluster_counts': cluster_counts,
+        'avg_savings': avg_savings,
+        'utilization': avg_utilization
+    })
 
 
 # ============================================================================

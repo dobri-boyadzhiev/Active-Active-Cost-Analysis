@@ -123,6 +123,32 @@
             </div>
         </div>
     </div>
+
+    <div class="row g-3 mb-3">
+        <!-- Cluster Age Distribution -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-hourglass-split"></i> Cluster Age Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="clusterAgeDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Age vs Savings Correlation -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-scatter-chart"></i> Age vs Savings Correlation</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="ageVsSavingsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- SECTION 3: Geographic & Cloud Provider Analysis -->
@@ -138,6 +164,20 @@
                 </div>
                 <div class="card-body">
                     <canvas id="cloudProviderComparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <!-- Regional Savings Heatmap -->
+        <div class="col-md-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-map-fill"></i> Regional Savings Heatmap</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="regionalSavingsHeatmapChart"></canvas>
                 </div>
             </div>
         </div>
@@ -211,6 +251,20 @@
             </div>
         </div>
     </div>
+
+    <div class="row g-3 mb-3">
+        <!-- Software Version Age Analysis -->
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-diagram-2-fill"></i> Software Version Age Analysis</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="softwareVersionAgeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- SECTION 7: Cluster Size & Complexity -->
@@ -226,6 +280,20 @@
                 </div>
                 <div class="card-body">
                     <canvas id="clusterSizeCorrelationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <!-- Shards Count Distribution -->
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-grid-3x3-gap-fill"></i> Shards Count Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="shardsCountDistributionChart"></canvas>
                 </div>
             </div>
         </div>
@@ -471,9 +539,12 @@ function loadAllCharts() {
     // Time-based
     loadMultiRunComparison();
     loadSavingsVelocity();
+    loadClusterAgeDistribution(filters);
+    loadAgeVsSavingsCorrelation(filters);
 
     // Geographic
     loadCloudProviderComparison(filters);
+    loadRegionalSavingsHeatmap(filters);
 
     // Instance Type
     loadInstanceEfficiency(filters);
@@ -484,9 +555,11 @@ function loadAllCharts() {
 
     // Redis Version
     loadRedisVersionAnalysis(filters);
+    loadSoftwareVersionAgeAnalysis(filters);
 
     // Cluster Size
     loadClusterSizeCorrelation(filters);
+    loadShardsCountDistribution(filters);
 
     // Comparison
     loadRadarChart(filters);
@@ -1607,6 +1680,412 @@ function loadSavingsHeatmap(filters) {
             });
         })
         .catch(error => console.error('Error loading savings heatmap:', error));
+}
+
+// ============================================================================
+// NEW CHART FUNCTIONS - TOP 5 PRIORITY CHARTS
+// ============================================================================
+
+function loadClusterAgeDistribution(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        softwareVersion: filters.softwareVersion
+    });
+
+    fetch(buildUrl(`api/charts/cluster-age-distribution?${params}`))
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('clusterAgeDistributionChart').getContext('2d');
+
+            if (charts.clusterAgeDistribution) charts.clusterAgeDistribution.destroy();
+
+            charts.clusterAgeDistribution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.age_ranges,
+                    datasets: [
+                        {
+                            label: 'Cluster Count',
+                            data: data.cluster_counts,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Total Savings ($)',
+                            data: data.total_savings,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Cluster Distribution by Age'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Cluster Count' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Total Savings ($)' },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading cluster age distribution:', error));
+}
+
+function loadAgeVsSavingsCorrelation(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        softwareVersion: filters.softwareVersion
+    });
+
+    fetch(buildUrl(`api/charts/age-vs-savings-correlation?${params}`))
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('ageVsSavingsChart').getContext('2d');
+
+            if (charts.ageVsSavings) charts.ageVsSavings.destroy();
+
+            charts.ageVsSavings = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Clusters',
+                        data: data.data,
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Cluster Age vs Savings Opportunity'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const item = context.raw;
+                                    return [
+                                        `Cluster: ${item.label}`,
+                                        `Age: ${item.x} days`,
+                                        `Savings: $${item.y}`,
+                                        `Savings %: ${item.savings_percent}%`,
+                                        `Provider: ${item.cloud_provider}`,
+                                        `Version: ${item.software_version}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Cluster Age (days)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Total Savings ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading age vs savings correlation:', error));
+}
+
+function loadRegionalSavingsHeatmap(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        softwareVersion: filters.softwareVersion
+    });
+
+    fetch(buildUrl(`api/charts/regional-savings-heatmap?${params}`))
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('regionalSavingsHeatmapChart').getContext('2d');
+
+            if (charts.regionalSavingsHeatmap) charts.regionalSavingsHeatmap.destroy();
+
+            // Group data by region for stacked bar chart
+            const regions = [...new Set(data.data.map(d => d.region))];
+            const providers = [...new Set(data.data.map(d => d.provider))];
+
+            const datasets = providers.map((provider, idx) => {
+                const colors = [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)'
+                ];
+
+                return {
+                    label: provider,
+                    data: regions.map(region => {
+                        const item = data.data.find(d => d.region === region && d.provider === provider);
+                        return item ? item.savings : 0;
+                    }),
+                    backgroundColor: colors[idx % colors.length],
+                    borderColor: colors[idx % colors.length].replace('0.6', '1'),
+                    borderWidth: 1
+                };
+            });
+
+            charts.regionalSavingsHeatmap = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: regions,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2.5,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Savings Opportunities by Region and Cloud Provider'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const region = context.label;
+                                    const provider = context.dataset.label;
+                                    const item = data.data.find(d => d.region === region && d.provider === provider);
+                                    if (item) {
+                                        return [
+                                            `Clusters: ${item.cluster_count}`,
+                                            `Avg Savings %: ${item.avg_savings_percent}%`
+                                        ];
+                                    }
+                                    return [];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: { display: true, text: 'Region' }
+                        },
+                        y: {
+                            stacked: true,
+                            title: { display: true, text: 'Total Savings ($)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading regional savings heatmap:', error));
+}
+
+function loadSoftwareVersionAgeAnalysis(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        softwareVersion: filters.softwareVersion
+    });
+
+    fetch(buildUrl(`api/charts/software-version-age-analysis?${params}`))
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('softwareVersionAgeChart').getContext('2d');
+
+            if (charts.softwareVersionAge) charts.softwareVersionAge.destroy();
+
+            // Group by software version for better visualization
+            const versions = [...new Set(data.data.map(d => d.x))];
+            const datasets = versions.map((version, idx) => {
+                const colors = [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)'
+                ];
+
+                return {
+                    label: version,
+                    data: data.data.filter(d => d.x === version),
+                    backgroundColor: colors[idx % colors.length],
+                    borderColor: colors[idx % colors.length].replace('0.6', '1'),
+                    borderWidth: 1
+                };
+            });
+
+            charts.softwareVersionAge = new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Software Version vs Cluster Age (bubble size = savings)'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const item = context.raw;
+                                    return [
+                                        `Cluster: ${item.label}`,
+                                        `Version: ${item.x}`,
+                                        `Age: ${item.y} days`,
+                                        `Savings: $${item.savings}`,
+                                        `Savings %: ${item.savings_percent}%`,
+                                        `Provider: ${item.cloud_provider}`,
+                                        `Region: ${item.region}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            title: { display: true, text: 'Software Version' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Cluster Age (days)' }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading software version age analysis:', error));
+}
+
+function loadShardsCountDistribution(filters) {
+    const params = new URLSearchParams({
+        run_id: filters.runId,
+        cloudProvider: filters.cloudProvider,
+        softwareVersion: filters.softwareVersion
+    });
+
+    fetch(buildUrl(`api/charts/shards-count-distribution?${params}`))
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('shardsCountDistributionChart').getContext('2d');
+
+            if (charts.shardsCountDistribution) charts.shardsCountDistribution.destroy();
+
+            charts.shardsCountDistribution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.shard_ranges,
+                    datasets: [
+                        {
+                            label: 'Cluster Count',
+                            data: data.cluster_counts,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Avg Savings ($)',
+                            data: data.avg_savings,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Avg Utilization (%)',
+                            data: data.utilization,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            type: 'line',
+                            yAxisID: 'y2'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Shards Distribution and Capacity Utilization'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Cluster Count' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Avg Savings ($)' },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        },
+                        y2: {
+                            type: 'linear',
+                            display: false,
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading shards count distribution:', error));
 }
 
 </script>
