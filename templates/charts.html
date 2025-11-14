@@ -75,25 +75,6 @@
     </div>
 </div>
 
-<!-- SECTION 1: Action Priority & Decision Making -->
-<div class="mb-4">
-    <h5 class="text-primary mb-3"><i class="bi bi-bullseye"></i> Action Priority & Decision Making</h5>
-
-    <div class="row g-3 mb-3">
-        <!-- ROI Timeline Projection -->
-        <div class="col-md-12">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-graph-up-arrow"></i> ROI Timeline Projection</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="roiTimelineChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- SECTION 2: Time-based Analytics -->
 <div class="mb-4">
     <h5 class="text-primary mb-3"><i class="bi bi-clock-history"></i> Time-based Analytics</h5>
@@ -164,20 +145,6 @@
                 </div>
                 <div class="card-body">
                     <canvas id="cloudProviderComparisonChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-3 mb-3">
-        <!-- Regional Savings Heatmap -->
-        <div class="col-md-12">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-map-fill"></i> Regional Savings Heatmap</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="regionalSavingsHeatmapChart"></canvas>
                 </div>
             </div>
         </div>
@@ -336,18 +303,6 @@
     <h5 class="text-primary mb-3"><i class="bi bi-cash-stack"></i> Cost Breakdown & Analysis</h5>
 
     <div class="row g-3 mb-3">
-        <!-- Pareto Chart - Top Cost Drivers -->
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-graph-down"></i> Top Cost Drivers (Pareto)</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="paretoChart"></canvas>
-                </div>
-            </div>
-        </div>
-
         <!-- Savings Distribution -->
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
@@ -382,37 +337,6 @@
                 </div>
                 <div class="card-body">
                     <canvas id="savingsBreakdownChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- SECTION 10: Anomaly Detection -->
-<div class="mb-4">
-    <h5 class="text-primary mb-3"><i class="bi bi-exclamation-triangle-fill"></i> Anomaly Detection</h5>
-
-    <div class="row g-3 mb-3">
-        <!-- Outlier Detection Box Plot -->
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-box"></i> Cost Outlier Detection</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="outlierDetectionChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Savings Heatmap -->
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-grid-3x2-gap-fill"></i> Savings Heatmap</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="savingsHeatmapChart"></canvas>
                 </div>
             </div>
         </div>
@@ -544,7 +468,6 @@ function loadAllCharts() {
 
     // Geographic
     loadCloudProviderComparison(filters);
-    loadRegionalSavingsHeatmap(filters);
 
     // Instance Type
     loadInstanceEfficiency(filters);
@@ -566,90 +489,9 @@ function loadAllCharts() {
     loadCurrentVsOptimal(filters);
 
     // Cost Breakdown
-    loadParetoChart(filters);
     loadSavingsDistribution(filters);
     loadTopClusters(filters);
     loadSavingsBreakdown(filters);
-
-    // Anomaly Detection
-    loadOutlierDetection(filters);
-    loadSavingsHeatmap(filters);
-}
-
-// ============================================================================
-// ACTION PRIORITY CHARTS
-// ============================================================================
-
-function loadROITimeline(filters) {
-    const params = new URLSearchParams({
-        run_id: filters.runId,
-        limit: filters.topN,
-        cloudProvider: filters.cloudProvider,
-        softwareVersion: filters.softwareVersion
-    });
-
-    fetch(buildUrl(`api/charts/roi-timeline?${params}`))
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('roiTimelineChart').getContext('2d');
-
-            if (charts.roiTimeline) charts.roiTimeline.destroy();
-
-            charts.roiTimeline = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.labels,
-                    datasets: [
-                        {
-                            label: 'Incremental Savings',
-                            data: data.incremental,
-                            type: 'bar',
-                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Cumulative Savings',
-                            data: data.cumulative,
-                            type: 'line',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 1.5,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `Top ${topN} Clusters - Cumulative ROI Timeline`
-                        }
-                    },
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: { display: true, text: 'Incremental Savings ($)' }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: { display: true, text: 'Cumulative Savings ($)' },
-                            grid: { drawOnChartArea: false }
-                        }
-                    }
-                }
-            });
-        })
-        .catch(error => console.error('Error loading ROI timeline:', error));
 }
 
 // ============================================================================
@@ -1279,75 +1121,6 @@ function loadCurrentVsOptimal(filters) {
 // COST BREAKDOWN & ANALYSIS CHARTS
 // ============================================================================
 
-function loadParetoChart(filters) {
-    const params = new URLSearchParams({
-        run_id: filters.runId,
-        limit: filters.topN,
-        cloudProvider: filters.cloudProvider,
-        softwareVersion: filters.softwareVersion
-    });
-
-    fetch(buildUrl(`api/charts/pareto-cost-drivers?${params}`))
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('paretoChart').getContext('2d');
-
-            if (charts.pareto) charts.pareto.destroy();
-
-            charts.pareto = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.labels,
-                    datasets: [
-                        {
-                            label: 'Cost',
-                            data: data.costs,
-                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Cumulative %',
-                            data: data.cumulative_percent,
-                            type: 'line',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                            fill: false,
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 1.5,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Pareto Chart - Top Cost Drivers (80/20 Rule)'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: { display: true, text: 'Cost ($)' }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: { display: true, text: 'Cumulative %' },
-                            max: 100,
-                            grid: { drawOnChartArea: false }
-                        }
-                    }
-                }
-            });
-        })
-        .catch(error => console.error('Error loading Pareto chart:', error));
-}
-
 function loadSavingsDistribution(filters) {
     const params = new URLSearchParams({
         run_id: filters.runId,
@@ -1493,196 +1266,6 @@ function loadSavingsBreakdown(filters) {
 }
 
 // ============================================================================
-// ANOMALY DETECTION CHARTS
-// ============================================================================
-
-function loadOutlierDetection(filters) {
-    const params = new URLSearchParams({
-        run_id: filters.runId,
-        cloudProvider: filters.cloudProvider,
-        softwareVersion: filters.softwareVersion
-    });
-
-    fetch(buildUrl(`api/charts/outlier-detection?${params}`))
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('outlierDetectionChart').getContext('2d');
-
-            if (charts.outlierDetection) charts.outlierDetection.destroy();
-
-            // Create box plot using scatter chart
-            const datasets = [];
-            const labels = [];
-
-            data.data.forEach((item, idx) => {
-                labels.push(item.provider);
-
-                // Box plot main body
-                datasets.push({
-                    label: `${item.provider} - Range`,
-                    data: [{
-                        x: idx,
-                        y: item.min
-                    }, {
-                        x: idx,
-                        y: item.max
-                    }],
-                    type: 'line',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    fill: false,
-                    showLine: true,
-                    pointRadius: 0
-                });
-
-                // Quartiles
-                datasets.push({
-                    label: `${item.provider} - IQR`,
-                    data: [{
-                        x: idx,
-                        y: item.q1
-                    }, {
-                        x: idx,
-                        y: item.q3
-                    }],
-                    type: 'line',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderWidth: 10,
-                    showLine: true,
-                    pointRadius: 0
-                });
-
-                // Median
-                datasets.push({
-                    label: `${item.provider} - Median`,
-                    data: [{
-                        x: idx,
-                        y: item.median
-                    }],
-                    type: 'scatter',
-                    backgroundColor: 'rgba(255, 99, 132, 1)',
-                    pointRadius: 5,
-                    pointStyle: 'line'
-                });
-
-                // Outliers
-                if (item.outliers && item.outliers.length > 0) {
-                    datasets.push({
-                        label: `${item.provider} - Outliers`,
-                        data: item.outliers.map(o => ({
-                            x: idx,
-                            y: o.value
-                        })),
-                        type: 'scatter',
-                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                        pointRadius: 4
-                    });
-                }
-            });
-
-            charts.outlierDetection = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    labels: labels,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 1.5,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Cost Outlier Detection by Provider'
-                        },
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            ticks: {
-                                callback: function(value, index) {
-                                    return labels[value] || '';
-                                }
-                            },
-                            title: { display: true, text: 'Cloud Provider' }
-                        },
-                        y: {
-                            title: { display: true, text: 'Cost ($)' }
-                        }
-                    }
-                }
-            });
-        })
-        .catch(error => console.error('Error loading outlier detection:', error));
-}
-
-function loadSavingsHeatmap(filters) {
-    const params = new URLSearchParams({
-        run_id: filters.runId,
-        cloudProvider: filters.cloudProvider,
-        softwareVersion: filters.softwareVersion
-    });
-
-    fetch(buildUrl(`api/charts/savings-heatmap?${params}`))
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('savingsHeatmapChart').getContext('2d');
-
-            if (charts.savingsHeatmap) charts.savingsHeatmap.destroy();
-
-            charts.savingsHeatmap = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Clusters',
-                        data: data.data,
-                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 1,
-                        pointRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 1.5,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Savings Amount vs Savings Percentage'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const item = context.raw;
-                                    return [
-                                        `Cluster: ${item.label}`,
-                                        `Savings: $${item.x}`,
-                                        `Savings %: ${item.y}%`
-                                    ];
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: { display: true, text: 'Total Savings ($)' }
-                        },
-                        y: {
-                            title: { display: true, text: 'Savings Percentage (%)' }
-                        }
-                    }
-                }
-            });
-        })
-        .catch(error => console.error('Error loading savings heatmap:', error));
-}
-
-// ============================================================================
 // NEW CHART FUNCTIONS - TOP 5 PRIORITY CHARTS
 // ============================================================================
 
@@ -1823,96 +1406,6 @@ function loadAgeVsSavingsCorrelation(filters) {
             });
         })
         .catch(error => console.error('Error loading age vs savings correlation:', error));
-}
-
-function loadRegionalSavingsHeatmap(filters) {
-    const params = new URLSearchParams({
-        run_id: filters.runId,
-        cloudProvider: filters.cloudProvider,
-        softwareVersion: filters.softwareVersion
-    });
-
-    fetch(buildUrl(`api/charts/regional-savings-heatmap?${params}`))
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('regionalSavingsHeatmapChart').getContext('2d');
-
-            if (charts.regionalSavingsHeatmap) charts.regionalSavingsHeatmap.destroy();
-
-            // Group data by region for stacked bar chart
-            const regions = [...new Set(data.data.map(d => d.region))];
-            const providers = [...new Set(data.data.map(d => d.provider))];
-
-            const datasets = providers.map((provider, idx) => {
-                const colors = [
-                    'rgba(255, 99, 132, 0.6)',
-                    'rgba(54, 162, 235, 0.6)',
-                    'rgba(255, 206, 86, 0.6)',
-                    'rgba(75, 192, 192, 0.6)'
-                ];
-
-                return {
-                    label: provider,
-                    data: regions.map(region => {
-                        const item = data.data.find(d => d.region === region && d.provider === provider);
-                        return item ? item.savings : 0;
-                    }),
-                    backgroundColor: colors[idx % colors.length],
-                    borderColor: colors[idx % colors.length].replace('0.6', '1'),
-                    borderWidth: 1
-                };
-            });
-
-            charts.regionalSavingsHeatmap = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: regions,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 2.5,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Savings Opportunities by Region and Cloud Provider'
-                        },
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                afterLabel: function(context) {
-                                    const region = context.label;
-                                    const provider = context.dataset.label;
-                                    const item = data.data.find(d => d.region === region && d.provider === provider);
-                                    if (item) {
-                                        return [
-                                            `Clusters: ${item.cluster_count}`,
-                                            `Avg Savings %: ${item.avg_savings_percent}%`
-                                        ];
-                                    }
-                                    return [];
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            stacked: true,
-                            title: { display: true, text: 'Region' }
-                        },
-                        y: {
-                            stacked: true,
-                            title: { display: true, text: 'Total Savings ($)' }
-                        }
-                    }
-                }
-            });
-        })
-        .catch(error => console.error('Error loading regional savings heatmap:', error));
 }
 
 function loadSoftwareVersionAgeAnalysis(filters) {
