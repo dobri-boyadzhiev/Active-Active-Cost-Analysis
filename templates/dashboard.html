@@ -266,7 +266,7 @@
                                     <small class="text-muted">N/A</small>
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td data-order="{{ cluster.age_days if cluster.age_days is not none else -1 }}">
                                     {% if cluster.age_days is not none %}
                                     {% if cluster.age_days >= 365 %}
                                     <span class="badge bg-warning text-dark">{{ cluster.age_display }}</span>
