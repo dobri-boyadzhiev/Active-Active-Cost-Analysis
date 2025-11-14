@@ -2168,6 +2168,455 @@ def api_cost_treemap():
 
 
 # ============================================================================
+# NEW OPERATIONAL CHARTS APIs
+# ============================================================================
+
+@app.route('/api/charts/cluster-age-savings-potential')
+def api_cluster_age_savings_potential():
+    """API: Get cluster age vs savings potential scatter plot data."""
+    from datetime import datetime
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'data': []})
+
+    # Build filter clause
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"', 'cr.total_savings > 0'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get clusters with age and savings data
+    query = '''
+        SELECT
+            cr.mc_uid,
+            cr.total_savings,
+            cr.savings_percent,
+            cm.creation_date
+        FROM cluster_results cr
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+        AND cm.creation_date IS NOT NULL
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    # Calculate age and prepare data
+    current_date = datetime.now()
+    scatter_data = []
+
+    for row in results:
+        try:
+            creation_date = datetime.fromisoformat(row['creation_date'].replace('Z', '+00:00'))
+            age_days = (current_date - creation_date).days
+
+            scatter_data.append({
+                'x': age_days,
+                'y': round(row['total_savings'], 2),
+                'savings_percent': round(row['savings_percent'], 1),
+                'label': row['mc_uid'][:12] + '...'
+            })
+        except (ValueError, AttributeError):
+            continue
+
+    db.close()
+    return jsonify({'data': scatter_data})
+
+
+@app.route('/api/charts/cost-breakdown-by-component')
+def api_cost_breakdown_by_component():
+    """API: Get cost breakdown by component (instance vs storage) per cloud provider."""
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'labels': [], 'instance_costs': [], 'storage_costs': []})
+
+    # Build filter clause (no cloud_provider filter since we're grouping by it)
+    filter_clauses = []
+    filter_params = []
+
+    if software_version != 'All':
+        filter_clauses.append('cm.software_version = ?')
+        filter_params.append(software_version)
+
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get cost breakdown by cloud provider
+    query = '''
+        SELECT
+            cm.cloud_provider,
+            SUM(cs.instance_price) as total_instance_cost,
+            SUM(cs.storage_price) as total_storage_cost
+        FROM cluster_results cr
+        JOIN cluster_singles cs ON cr.result_id = cs.result_id AND cs.cluster_type = 'current'
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+        AND cm.cloud_provider IS NOT NULL
+        GROUP BY cm.cloud_provider
+        ORDER BY (SUM(cs.instance_price) + SUM(cs.storage_price)) DESC
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    labels = []
+    instance_costs = []
+    storage_costs = []
+
+    for row in results:
+        labels.append(row['cloud_provider'])
+        instance_costs.append(round(row['total_instance_cost'], 2))
+        storage_costs.append(round(row['total_storage_cost'], 2))
+
+    db.close()
+    return jsonify({
+        'labels': labels,
+        'instance_costs': instance_costs,
+        'storage_costs': storage_costs
+    })
+
+
+@app.route('/api/charts/optimization-rate-trend')
+def api_optimization_rate_trend():
+    """API: Get optimization rate trend over time (last 10 runs)."""
+    db = AADatabase(DB_PATH)
+
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    # Get last 10 completed runs
+    runs = db.conn.execute('''
+        SELECT run_id, run_timestamp
+        FROM runs
+        WHERE status = 'completed'
+        ORDER BY run_timestamp DESC
+        LIMIT 10
+    ''').fetchall()
+
+    if not runs:
+        db.close()
+        return jsonify({'labels': [], 'optimization_rate': [], 'avg_savings_percent': []})
+
+    # Reverse to show oldest first
+    runs = list(reversed(runs))
+
+    labels = []
+    optimization_rates = []
+    avg_savings_percents = []
+
+    for run in runs:
+        run_id = run['run_id']
+
+        # Build filter clause
+        filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+        where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+        where_clause = ' AND '.join(where_clauses)
+        params = [run_id] + filter_params
+
+        # Calculate optimization rate (% of clusters with savings > 10%)
+        query = '''
+            SELECT
+                COUNT(*) as total_clusters,
+                SUM(CASE WHEN cr.savings_percent > 10 THEN 1 ELSE 0 END) as optimizable_clusters,
+                AVG(cr.savings_percent) as avg_savings_percent
+            FROM cluster_results cr
+            LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+            WHERE {}
+        '''.format(where_clause)
+        stats = db.conn.execute(query, tuple(params)).fetchone()
+
+        labels.append(run['run_timestamp'][:10])  # Date only
+
+        if stats['total_clusters'] > 0:
+            opt_rate = (stats['optimizable_clusters'] / stats['total_clusters']) * 100
+            optimization_rates.append(round(opt_rate, 1))
+            avg_savings_percents.append(round(stats['avg_savings_percent'] or 0, 1))
+        else:
+            optimization_rates.append(0)
+            avg_savings_percents.append(0)
+
+    db.close()
+    return jsonify({
+        'labels': labels,
+        'optimization_rate': optimization_rates,
+        'avg_savings_percent': avg_savings_percents
+    })
+
+
+@app.route('/api/charts/regional-cost-efficiency')
+def api_regional_cost_efficiency():
+    """API: Get regional cost efficiency matrix (bubble chart data)."""
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'data': []})
+
+    # Build filter clause
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get data grouped by region and cloud provider
+    query = '''
+        SELECT
+            cm.region,
+            cm.cloud_provider,
+            COUNT(*) as cluster_count,
+            AVG(cs.total_price) as avg_cost_per_cluster,
+            SUM(cr.total_savings) as total_savings
+        FROM cluster_results cr
+        JOIN cluster_singles cs ON cr.result_id = cs.result_id AND cs.cluster_type = 'current'
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+        AND cm.region IS NOT NULL
+        AND cm.cloud_provider IS NOT NULL
+        GROUP BY cm.region, cm.cloud_provider
+        HAVING cluster_count > 0
+        ORDER BY total_savings DESC
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    # Prepare bubble chart data
+    bubble_data = []
+
+    # Color mapping for providers
+    provider_colors = {
+        'AWS': 'rgba(255, 153, 0, 0.6)',
+        'GCP': 'rgba(66, 133, 244, 0.6)',
+        'Azure': 'rgba(0, 120, 212, 0.6)'
+    }
+
+    for row in results:
+        bubble_data.append({
+            'x': row['cluster_count'],
+            'y': round(row['avg_cost_per_cluster'], 2),
+            'r': max(5, min(50, row['total_savings'] / 1000)),  # Bubble size (5-50 range)
+            'label': row['region'],
+            'provider': row['cloud_provider'],
+            'total_savings': round(row['total_savings'], 2),
+            'backgroundColor': provider_colors.get(row['cloud_provider'], 'rgba(128, 128, 128, 0.6)')
+        })
+
+    db.close()
+    return jsonify({'data': bubble_data})
+
+
+@app.route('/api/charts/shards-distribution-cost')
+def api_shards_distribution_cost():
+    """API: Get shards distribution vs cost (box plot data)."""
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'data': []})
+
+    # Build filter clause
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get clusters with shards count and cost
+    query = '''
+        SELECT
+            cm.shards_count,
+            cs.total_price,
+            cr.mc_uid
+        FROM cluster_results cr
+        JOIN cluster_singles cs ON cr.result_id = cs.result_id AND cs.cluster_type = 'current'
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+        AND cm.shards_count IS NOT NULL
+        AND cm.shards_count > 0
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    # Group by shard ranges
+    shard_groups = {
+        '1-5 shards': [],
+        '6-10 shards': [],
+        '11-20 shards': [],
+        '21+ shards': []
+    }
+
+    for row in results:
+        shards = row['shards_count']
+        cost_per_shard = row['total_price'] / shards if shards > 0 else 0
+
+        if shards <= 5:
+            shard_groups['1-5 shards'].append(cost_per_shard)
+        elif shards <= 10:
+            shard_groups['6-10 shards'].append(cost_per_shard)
+        elif shards <= 20:
+            shard_groups['11-20 shards'].append(cost_per_shard)
+        else:
+            shard_groups['21+ shards'].append(cost_per_shard)
+
+    # Calculate box plot statistics for each group
+    box_plot_data = []
+
+    for group_name, costs in shard_groups.items():
+        if not costs:
+            continue
+
+        costs.sort()
+        n = len(costs)
+
+        q1_idx = n // 4
+        q2_idx = n // 2
+        q3_idx = (3 * n) // 4
+
+        q1 = costs[q1_idx]
+        q2 = costs[q2_idx]  # Median
+        q3 = costs[q3_idx]
+
+        box_plot_data.append({
+            'group': group_name,
+            'min': round(costs[0], 2),
+            'q1': round(q1, 2),
+            'median': round(q2, 2),
+            'q3': round(q3, 2),
+            'max': round(costs[-1], 2),
+            'count': n
+        })
+
+    db.close()
+    return jsonify({'data': box_plot_data})
+
+
+@app.route('/api/charts/optimization-priority')
+def api_optimization_priority():
+    """API: Get top 10 clusters by optimization priority score."""
+    from datetime import datetime
+    db = AADatabase(DB_PATH)
+
+    run_id = request.args.get('run_id', type=int)
+    cloud_provider = request.args.get('cloudProvider', default='All')
+    software_version = request.args.get('softwareVersion', default='All')
+
+    if not run_id:
+        latest = db.conn.execute('SELECT run_id FROM runs WHERE status = "completed" ORDER BY run_timestamp DESC LIMIT 1').fetchone()
+        run_id = latest['run_id'] if latest else None
+
+    if not run_id:
+        db.close()
+        return jsonify({'labels': [], 'scores': [], 'colors': []})
+
+    # Build filter clause
+    filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"', 'cr.total_savings > 0'] + filter_clauses
+    where_clause = ' AND '.join(where_clauses)
+    params = [run_id] + filter_params
+
+    # Get clusters with all necessary data
+    query = '''
+        SELECT
+            cr.mc_uid,
+            cr.total_savings,
+            cr.savings_percent,
+            cs.total_price as current_cost,
+            cm.creation_date
+        FROM cluster_results cr
+        JOIN cluster_singles cs ON cr.result_id = cs.result_id AND cs.cluster_type = 'current'
+        LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid
+        WHERE {}
+    '''.format(where_clause)
+    results = db.conn.execute(query, tuple(params)).fetchall()
+
+    # Calculate priority scores
+    current_date = datetime.now()
+    clusters_with_scores = []
+
+    for row in results:
+        # Calculate age factor
+        age_factor = 0
+        if row['creation_date']:
+            try:
+                creation_date = datetime.fromisoformat(row['creation_date'].replace('Z', '+00:00'))
+                age_days = (current_date - creation_date).days
+                age_factor = age_days / 365  # Years
+            except (ValueError, AttributeError):
+                age_factor = 0
+
+        # Priority Score Formula: (savings_$ × 0.4) + (savings_% × 0.3) + (age_years × 0.2) + (current_cost × 0.1)
+        # Normalize to 0-100 scale
+        savings_score = min(100, (row['total_savings'] / 10000) * 100) * 0.4
+        percent_score = min(100, row['savings_percent']) * 0.3
+        age_score = min(100, age_factor * 20) * 0.2
+        cost_score = min(100, (row['current_cost'] / 10000) * 100) * 0.1
+
+        priority_score = savings_score + percent_score + age_score + cost_score
+
+        clusters_with_scores.append({
+            'mc_uid': row['mc_uid'],
+            'priority_score': priority_score,
+            'total_savings': row['total_savings'],
+            'savings_percent': row['savings_percent']
+        })
+
+    # Sort by priority score and get top 10
+    clusters_with_scores.sort(key=lambda x: x['priority_score'], reverse=True)
+    top_10 = clusters_with_scores[:10]
+
+    labels = []
+    scores = []
+    colors = []
+
+    for cluster in top_10:
+        labels.append(cluster['mc_uid'][:12] + '...')
+        scores.append(round(cluster['priority_score'], 1))
+
+        # Color based on urgency
+        if cluster['priority_score'] >= 70:
+            colors.append('rgba(220, 53, 69, 0.8)')  # Red - High priority
+        elif cluster['priority_score'] >= 40:
+            colors.append('rgba(255, 193, 7, 0.8)')  # Yellow - Medium priority
+        else:
+            colors.append('rgba(40, 167, 69, 0.8)')  # Green - Low priority
+
+    db.close()
+    return jsonify({
+        'labels': labels,
+        'scores': scores,
+        'colors': colors
+    })
+
+
+# ============================================================================
 # FILTER APIs
 # ============================================================================
 
