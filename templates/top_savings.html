@@ -26,7 +26,7 @@
                     {% for run in all_runs %}
                     <option value="{{ run.run_id }}"
                             {% if selected_run and run.run_id == selected_run.run_id %}selected{% endif %}>
-                        Run #{{ run.run_id }} - {{ run.run_timestamp[:10] }} - {{ run.jira_ticket }}
+                        Run #{{ run.run_id }} - {{ run.run_timestamp[:10] }}
                     </option>
                     {% endfor %}
                 </select>

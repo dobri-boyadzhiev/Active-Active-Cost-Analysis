@@ -14,9 +14,7 @@
     <div class="col-md-6 text-md-end">
         <div class="text-muted" style="font-size: 0.875rem;">
             <strong><i class="bi bi-bar-chart-line"></i> Latest Run:</strong>
-            Run #{{ stats.run_id }} |
-            {{ stats.timestamp[:10] }} {{ stats.timestamp[11:19] }} |
-            <a href="https://redislabs.atlassian.net/browse/{{ stats.jira_ticket }}" target="_blank">{{ stats.jira_ticket }}</a>
+            Run #{{ stats.run_id }} | {{ stats.timestamp[:10] }} {{ stats.timestamp[11:19] }}
         </div>
     </div>
     {% endif %}

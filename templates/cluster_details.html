@@ -16,8 +16,7 @@
             <i class="bi bi-server"></i> Cluster: <code>{{ mc_uid }}</code>
         </h1>
         <p class="text-muted mb-0" style="font-size: 0.95rem;">
-            Latest data from: {{ latest_result.run_timestamp[:10] }} |
-            Ticket: <a href="https://redislabs.atlassian.net/browse/{{ latest_result.jira_ticket }}" target="_blank">{{ latest_result.jira_ticket }}</a>
+            Latest data from: {{ latest_result.run_timestamp[:10] }}
         </p>
     </div>
 </div>
@@ -554,7 +553,6 @@
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>Jira Ticket</th>
                                 <th class="text-end">Current Price</th>
                                 <th class="text-end">Optimal Price</th>
                                 <th class="text-end">Savings</th>
@@ -565,11 +563,6 @@
                             {% for record in history | reverse %}
                             <tr>
                                 <td>{{ record.timestamp[:10] }}</td>
-                                <td>
-                                    <a href="https://redislabs.atlassian.net/browse/{{ record.jira_ticket }}" target="_blank">
-                                        {{ record.jira_ticket }}
-                                    </a>
-                                </td>
                                 <td class="text-end">${{ "{:,.2f}".format(record.current_price) }}</td>
                                 <td class="text-end">${{ "{:,.2f}".format(record.optimal_price) }}</td>
                                 <td class="text-end">
