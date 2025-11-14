@@ -136,16 +136,6 @@
                                 <td><code>{{ metadata.storage_type or 'N/A' }}</code></td>
                             </tr>
                             <tr>
-                                <th>Created:</th>
-                                <td>
-                                    {% if metadata.created_at %}
-                                    <small>{{ metadata.created_at[:10] }}</small>
-                                    {% else %}
-                                    <small class="text-muted">N/A</small>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
                                 <th>Last Updated:</th>
                                 <td>
                                     {% if metadata.last_updated %}
@@ -351,9 +341,20 @@
                                     {% endfor %}
                                 </td>
                                 <td class="text-end">
-                                    <span class="badge bg-success">
-                                        ${{ "{:,.2f}".format(current.total_price - optimal.total_price) }}
+                                    {% set cluster_savings = current.total_price - optimal.total_price %}
+                                    {% if cluster_savings > 0 %}
+                                    <span class="badge bg-danger">
+                                        ${{ "{:,.2f}".format(cluster_savings) }}
                                     </span>
+                                    {% elif cluster_savings < 0 %}
+                                    <span class="badge bg-success">
+                                        ${{ "{:,.2f}".format(cluster_savings) }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">
+                                        ${{ "{:,.2f}".format(cluster_savings) }}
+                                    </span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -466,9 +467,23 @@
                                 </td>
                                 <td class="text-end">${{ "{:,.2f}".format(record.current_price) }}</td>
                                 <td class="text-end">${{ "{:,.2f}".format(record.optimal_price) }}</td>
-                                <td class="text-end text-success fw-bold">${{ "{:,.2f}".format(record.savings) }}</td>
                                 <td class="text-end">
+                                    {% if record.savings > 0 %}
+                                    <span class="text-danger fw-bold">${{ "{:,.2f}".format(record.savings) }}</span>
+                                    {% elif record.savings < 0 %}
+                                    <span class="text-success fw-bold">${{ "{:,.2f}".format(record.savings) }}</span>
+                                    {% else %}
+                                    <span class="fw-bold">${{ "{:,.2f}".format(record.savings) }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if record.savings_percent > 0 %}
+                                    <span class="badge bg-danger">{{ "{:.1f}".format(record.savings_percent) }}%</span>
+                                    {% elif record.savings_percent < 0 %}
                                     <span class="badge bg-success">{{ "{:.1f}".format(record.savings_percent) }}%</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ "{:.1f}".format(record.savings_percent) }}%</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}

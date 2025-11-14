@@ -708,6 +708,8 @@ class AADatabase:
                     SUM(CASE WHEN cs.cluster_type = 'optimal' THEN cs.total_price ELSE 0 END) as optimal_price,
                     cm.cloud_provider,
                     cm.redis_version,
+                    cm.cluster_name,
+                    cm.region,
                     cm.created_at
                 FROM cluster_results cr
                 JOIN cluster_singles cs ON cr.result_id = cs.result_id
@@ -727,6 +729,8 @@ class AADatabase:
                     SUM(CASE WHEN cs.cluster_type = 'optimal' THEN cs.total_price ELSE 0 END) as optimal_price,
                     cm.cloud_provider,
                     cm.redis_version,
+                    cm.cluster_name,
+                    cm.region,
                     cm.created_at
                 FROM cluster_results cr
                 JOIN cluster_singles cs ON cr.result_id = cs.result_id
@@ -747,6 +751,8 @@ class AADatabase:
                 'savings_percent': round(row['savings_percent'], 2),
                 'cloud_provider': row['cloud_provider'],
                 'redis_version': row['redis_version'],
+                'cluster_name': row['cluster_name'],
+                'region': row['region'],
                 'created_at': row['created_at']
             })
 

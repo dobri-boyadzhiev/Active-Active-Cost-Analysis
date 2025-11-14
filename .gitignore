@@ -26,3 +26,5 @@ ENV/
 # Database (optional - uncomment if you don't want to commit the database)
 # aa_report_cache.db
 
+# RCP directory (contains sensitive credentials and automation scripts)
+rcp/

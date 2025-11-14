@@ -40,6 +40,11 @@ app = Flask(__name__)
 # 🔴 FIXED: Use environment variable for secret key
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 
+# 🔴 Disable template caching in development
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.jinja_env.auto_reload = True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
 # 🔵 Database Path Configuration
 # For Cloud Run: uses GCS mounted volume
 # For local dev: uses current directory

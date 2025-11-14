@@ -85,9 +85,10 @@
                             <tr>
                                 <th>#</th>
                                 <th>Cluster UID</th>
+                                <th>Cluster Name</th>
+                                <th>Region</th>
                                 <th>Cloud Provider</th>
                                 <th>Redis Version</th>
-                                <th>Created</th>
                                 <th class="text-end">Current Price</th>
                                 <th class="text-end">Optimal Price</th>
                                 <th class="text-end">Savings</th>
@@ -100,6 +101,20 @@
                             <tr>
                                 <td><strong>{{ loop.index }}</strong></td>
                                 <td><code>{{ cluster.mc_uid }}</code></td>
+                                <td>
+                                    {% if cluster.cluster_name %}
+                                    <small>{{ cluster.cluster_name }}</small>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cluster.region %}
+                                    <small>{{ cluster.region }}</small>
+                                    {% else %}
+                                    <small class="text-muted">N/A</small>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if cluster.cloud_provider %}
                                     <span class="badge bg-info">{{ cluster.cloud_provider|upper }}</span>
@@ -114,20 +129,25 @@
                                     <small class="text-muted">N/A</small>
                                     {% endif %}
                                 </td>
-                                <td>
-                                    {% if cluster.created_at %}
-                                    <small>{{ cluster.created_at[:10] }}</small>
-                                    {% else %}
-                                    <small class="text-muted">N/A</small>
-                                    {% endif %}
-                                </td>
                                 <td class="text-end">${{ "{:,.2f}".format(cluster.current_price) }}</td>
                                 <td class="text-end">${{ "{:,.2f}".format(cluster.optimal_price) }}</td>
                                 <td class="text-end">
+                                    {% if cluster.savings > 0 %}
+                                    <span class="text-danger fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                    {% elif cluster.savings < 0 %}
                                     <span class="text-success fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                    {% else %}
+                                    <span class="fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                    {% endif %}
                                 </td>
                                 <td class="text-end">
+                                    {% if cluster.savings_percent > 0 %}
+                                    <span class="badge bg-danger">{{ "{:.1f}".format(cluster.savings_percent) }}%</span>
+                                    {% elif cluster.savings_percent < 0 %}
                                     <span class="badge bg-success">{{ "{:.1f}".format(cluster.savings_percent) }}%</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ "{:.1f}".format(cluster.savings_percent) }}%</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <a href="{{ url_for('cluster_details', mc_uid=cluster.mc_uid) }}" class="btn btn-sm btn-outline-primary">
@@ -139,10 +159,19 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-warning fw-bold">
-                                <td colspan="5">TOTAL</td>
+                                <td colspan="6">TOTAL</td>
                                 <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='current_price')) }}</td>
                                 <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='optimal_price')) }}</td>
-                                <td class="text-end text-success">${{ "{:,.2f}".format(opportunities | sum(attribute='savings')) }}</td>
+                                <td class="text-end">
+                                    {% set total_savings = opportunities | sum(attribute='savings') %}
+                                    {% if total_savings > 0 %}
+                                    <span class="text-danger">${{ "{:,.2f}".format(total_savings) }}</span>
+                                    {% elif total_savings < 0 %}
+                                    <span class="text-success">${{ "{:,.2f}".format(total_savings) }}</span>
+                                    {% else %}
+                                    ${{ "{:,.2f}".format(total_savings) }}
+                                    {% endif %}
+                                </td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
