@@ -364,7 +364,7 @@
                             {% for run in runs %}
                             <tr {% if run.run_id == stats.run_id %}class="table-primary"{% endif %}
                                 style="cursor: pointer;"
-                                onclick="window.location.href='/top-savings?run_id={{ run.run_id }}';">
+                                onclick="window.location.href=buildUrl('top-savings?run_id={{ run.run_id }}');">
                                 <td><strong>#{{ run.run_id }}</strong></td>
                                 <td>{{ run.run_timestamp[:10] }} <small class="text-muted">{{ run.run_timestamp[11:19] }}</small></td>
                                 <td class="text-center">{{ run.total_clusters }}</td>
