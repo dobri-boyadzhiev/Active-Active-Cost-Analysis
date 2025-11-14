@@ -7,10 +7,13 @@ AA Report Automation Tool - Analyze and optimize Active-Active Redis clusters.
 Usage:
     python aa_report_automation.py [--limit N] [--log-level LEVEL]
 
-Environment Variables:
+Environment Variables (or .env file):
     RCP_SERVER   - RCP hostname (default: rcp-server-prod.redislabs.com)
     RCP_USERNAME - RCP username (default: operations)
     RCP_PASSWORD - RCP password (REQUIRED)
+    GCS_BUCKET_NAME - GCS bucket name (default: active-active-cost-analysis)
+    ENABLE_GCS_UPLOAD - Enable GCS upload (default: true)
+    DB_PATH - Database path (default: script_dir/aa_report_cache.db)
 
 See README.md for full documentation.
 """
@@ -21,15 +24,31 @@ import time
 import datetime
 import argparse
 import logging
+import subprocess
 from typing import List, Tuple, Optional, Dict, Any
 from functools import wraps
 from collections import Counter
 from dataclasses import dataclass
+from pathlib import Path
 import threading
 
+# Get script directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
+
+# Load .env file if it exists
+try:
+    from dotenv import load_dotenv
+    env_file = os.path.join(script_dir, '.env')
+    if os.path.exists(env_file):
+        try:
+            load_dotenv(env_file)
+            print(f"[OK] Loaded config from: {env_file}")
+        except PermissionError:
+            print(f"[WARNING] Cannot read {env_file} (permission denied), using environment variables")
+except ImportError:
+    pass  # python-dotenv not installed, use environment variables
 
 from aa_database import AADatabase
 
@@ -78,13 +97,21 @@ RCP_SERVER = os.getenv('RCP_SERVER', 'rcp-server-prod.redislabs.com')
 RCP_USERNAME = os.getenv('RCP_USERNAME', 'operations')
 RCP_PASSWORD = os.getenv('RCP_PASSWORD')
 
+# GCS Upload configuration
+GCS_BUCKET_NAME = os.getenv('GCS_BUCKET_NAME', 'active-active-cost-analysis')
+ENABLE_GCS_UPLOAD = os.getenv('ENABLE_GCS_UPLOAD', 'true').lower() == 'true'
+
+# Database path - default to script directory
+DB_PATH = os.getenv('DB_PATH', os.path.join(script_dir, 'aa_report_cache.db'))
+
 
 # ============================================================================
 # LOGGING
 # ============================================================================
 
 def setup_logging(log_level: str = 'INFO') -> logging.Logger:
-    log_dir = os.path.join(os.path.expanduser('~'), 'logs')
+    # Create logs directory in script directory
+    log_dir = os.path.join(script_dir, 'logs')
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, f'aa_report_automation_{datetime.datetime.now().strftime("%Y-%m-%d")}.log')
 
@@ -110,7 +137,7 @@ class Config:
     RCP_SERVER: str = RCP_SERVER
     RCP_USERNAME: str = RCP_USERNAME
     RCP_PASSWORD: str = RCP_PASSWORD
-    DB_PATH: str = os.path.join(os.path.expanduser('~'), 'aa_report_cache.db')
+    DB_PATH: str = DB_PATH  # Use DB_PATH from environment or default to script_dir
     MAX_RETRIES: int = 3
     RETRY_DELAY: int = 5
     RETRY_BACKOFF: int = 2
@@ -118,6 +145,10 @@ class Config:
     API_CALLS_PER_SECOND: float = 2.0
     MAX_WORKERS: int = 5
     ENABLE_PARALLEL: bool = False
+
+    # GCS Upload configuration
+    GCS_BUCKET_NAME: str = GCS_BUCKET_NAME
+    ENABLE_GCS_UPLOAD: bool = ENABLE_GCS_UPLOAD
     EXCLUDE_UIDS: List[str] = []
 
     @classmethod
@@ -469,6 +500,62 @@ def generate_aa_report(rcp_client: RCPClientWrapper, db: AADatabase,
 
 
 # ============================================================================
+# GCS UPLOAD
+# ============================================================================
+
+def upload_database_to_gcs(db_path: str, bucket_name: str) -> bool:
+    """
+    Upload database file to Google Cloud Storage using gsutil.
+
+    This function temporarily removes the GOOGLE_APPLICATION_CREDENTIALS
+    environment variable to use user credentials instead of service account.
+
+    Args:
+        db_path: Path to local database file
+        bucket_name: GCS bucket name
+
+    Returns:
+        True if upload successful, False otherwise
+    """
+    gcs_path = f'gs://{bucket_name}/aa_report_cache.db'
+
+    # Temporarily remove service account credentials to use user credentials
+    old_creds = os.environ.pop('GOOGLE_APPLICATION_CREDENTIALS', None)
+
+    try:
+        logger.info(f"Uploading {db_path} to {gcs_path}")
+
+        # Use gsutil to upload
+        result = subprocess.run(
+            ['gsutil', 'cp', db_path, gcs_path],
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 minutes timeout
+        )
+
+        if result.returncode == 0:
+            logger.info("Database uploaded to GCS successfully")
+            return True
+        else:
+            logger.error(f"Upload failed: {result.stderr}")
+            return False
+
+    except subprocess.TimeoutExpired:
+        logger.error("Upload timeout (5 minutes)")
+        return False
+    except FileNotFoundError:
+        logger.error("gsutil not found. Please install Google Cloud SDK")
+        return False
+    except Exception as e:
+        logger.error(f"Upload error: {e}")
+        return False
+    finally:
+        # Restore service account credentials
+        if old_creds:
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = old_creds
+
+
+# ============================================================================
 # MAIN
 # ============================================================================
 
@@ -498,9 +585,18 @@ def run_report_generation(limit: Optional[int] = None) -> None:
         processed_count = generate_aa_report(rcp_client, db, run_id, limit=limit)
         db.complete_run(run_id, None)
 
+        # Upload database to GCS
+        if Config.ENABLE_GCS_UPLOAD:
+            logger.info("Uploading database to GCS...")
+            upload_success = upload_database_to_gcs(Config.DB_PATH, Config.GCS_BUCKET_NAME)
+            if not upload_success:
+                logger.warning("GCS upload failed, but continuing...")
+
         logger.info("="*80)
         logger.info(f"Completed: {processed_count}/{total_clusters}")
         logger.info(f"Database: {Config.DB_PATH}")
+        if Config.ENABLE_GCS_UPLOAD:
+            logger.info(f"GCS Bucket: gs://{Config.GCS_BUCKET_NAME}/aa_report_cache.db")
         logger.info("="*80)
     except Exception as e:
         logger.exception(f"Failed: {e}")

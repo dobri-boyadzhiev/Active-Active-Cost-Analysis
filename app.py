@@ -26,10 +26,10 @@ try:
     env_path = Path(__file__).parent / '.env'
     if env_path.exists():
         load_dotenv(env_path)
-        print(f"✅ Loaded environment variables from {env_path}")
+        print(f"[OK] Loaded environment variables from {env_path}")
 except ImportError:
-    print("ℹ️  python-dotenv not installed. Using system environment variables only.")
-    print("   Install with: pip install python-dotenv")
+    print("[INFO] python-dotenv not installed. Using system environment variables only.")
+    print("       Install with: pip install python-dotenv")
 
 # Import database module
 from aa_database import AADatabase
@@ -37,15 +37,15 @@ from aa_database import AADatabase
 # Initialize Flask app
 app = Flask(__name__)
 
-# 🔴 FIXED: Use environment variable for secret key
+# FIXED: Use environment variable for secret key
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 
-# 🔴 Disable template caching in development
+# Disable template caching in development
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
-# 🔵 Database Path Configuration
+# Database Path Configuration
 # For Cloud Run: uses GCS mounted volume
 # For local dev: uses current directory
 GCS_MOUNT_PATH = os.environ.get('GCS_MOUNT_PATH')
@@ -56,7 +56,7 @@ else:
     # Local development: database in current directory
     DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'aa_report_cache.db')
 
-# 🔵 Path prefix for Load Balancer routing (e.g., /aac)
+# Path prefix for Load Balancer routing (e.g., /aac)
 PATH_PREFIX = os.environ.get('PATH_PREFIX', '').rstrip('/')
 if PATH_PREFIX:
     app.config['APPLICATION_ROOT'] = PATH_PREFIX
@@ -82,7 +82,7 @@ if PATH_PREFIX:
 
     app.wsgi_app = PrefixMiddleware(app.wsgi_app, PATH_PREFIX)
 
-# 🟡 FIXED: Configure logging
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -90,9 +90,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Log configuration
-logger.info(f"🔵 Environment: {'Cloud Run' if GCS_MOUNT_PATH else 'Local Development'}")
-logger.info(f"🔵 Database Path: {DB_PATH}")
-logger.info(f"🔵 Path Prefix: {PATH_PREFIX if PATH_PREFIX else '(none)'}")
+logger.info(f"Environment: {'Cloud Run' if GCS_MOUNT_PATH else 'Local Development'}")
+logger.info(f"Database Path: {DB_PATH}")
+logger.info(f"Path Prefix: {PATH_PREFIX if PATH_PREFIX else '(none)'}")
 
 
 # ============================================================================
@@ -167,7 +167,7 @@ def handle_api_error(func):
 @handle_api_error
 def dashboard():
     """Main dashboard page."""
-    # 🔴 FIXED: Use context manager to prevent connection leak
+    # Use context manager to prevent connection leak
     with AADatabase(DB_PATH) as db:
         # Get latest run
         latest_run = db.conn.execute('''
@@ -485,7 +485,7 @@ def dashboard():
 
         runs = [dict(row) for row in runs_history]
 
-        # 🔴 FIXED: No need for db.close() - context manager handles it
+        # No need for db.close() - context manager handles it
         return render_template('dashboard.html',
                              latest_run=latest_run,
                              stats=stats,
@@ -501,12 +501,12 @@ def dashboard():
 @handle_api_error
 def cluster_details(mc_uid):
     """Cluster details page."""
-    # 🟡 FIXED: Validate input
+    # Validate input
     if not validate_mc_uid(mc_uid):
         logger.warning(f"Invalid mc_uid format: {mc_uid}")
         return "Invalid cluster ID format", 400
 
-    # 🔴 FIXED: Use context manager
+    # Use context manager
     with AADatabase(DB_PATH) as db:
         # Get latest result for this cluster
         latest_result = db.conn.execute('''
@@ -533,7 +533,7 @@ def cluster_details(mc_uid):
         current_clusters = []
         optimal_clusters = []
 
-        # 🟡 FIXED: Remove import from loop
+        # Remove import from loop
         for single in singles:
             cluster_data = {
                 'uid': single['cluster_uid'],
@@ -605,7 +605,7 @@ def cluster_details(mc_uid):
 @handle_api_error
 def top_savings():
     """Top savings opportunities page."""
-    # 🔴 FIXED: Use context manager
+    # Use context manager
     with AADatabase(DB_PATH) as db:
         # Get run_id from query param or use latest
         run_id = request.args.get('run_id', type=int)
@@ -784,11 +784,11 @@ def api_metadata_filters():
     """API: Get available filter values for metadata fields."""
     run_id = request.args.get('run_id', type=int)
 
-    # 🟡 FIXED: Validate input
+    # Validate input
     if run_id and not validate_run_id(run_id):
         return jsonify({'error': 'Invalid run_id'}), 400
 
-    # 🔴 FIXED: Use context manager
+    # Use context manager
     with AADatabase(DB_PATH) as db:
         # Get unique values for each metadata field
         cursor = db.conn.cursor()
@@ -844,7 +844,7 @@ def api_dynamic_filters():
     cloud_provider = request.args.get('cloud_provider', default='all', type=str)
     software_version = request.args.get('software_version', default='all', type=str)
 
-    # 🟡 FIXED: Use helper function
+    # Use helper function
     run_id = get_run_id_or_latest(run_id)
 
     if not run_id:
@@ -853,7 +853,7 @@ def api_dynamic_filters():
             'redis_versions': []
         })
 
-    # 🔴 FIXED: Use context manager
+    # Use context manager
     with AADatabase(DB_PATH) as db:
         cursor = db.conn.cursor()
 
@@ -871,7 +871,7 @@ def api_dynamic_filters():
 
         where_clause = ' AND '.join(where_conditions)
 
-        # 🔴 FIXED: Remove f-string SQL injection risk
+        # Remove f-string SQL injection risk
         # Build query with proper parameterization
         base_query_providers = '''
             SELECT DISTINCT cm.cloud_provider
@@ -1490,7 +1490,7 @@ def api_cloud_provider_comparison():
     params = [run_id] + filter_params
 
     # Get data grouped by cloud provider
-    # 🔴 FIXED: Use .format() instead of f-string for SQL (where_clause is from controlled code)
+    # Use .format() instead of f-string for SQL (where_clause is from controlled code)
     query = '''
         SELECT
             cm.cloud_provider,
@@ -1561,7 +1561,7 @@ def api_instance_efficiency_matrix():
     params = [run_id] + filter_params
 
     # Get all clusters with their instance types
-    # 🔴 FIXED: Use .format() instead of f-string
+    # Use .format() instead of f-string
     query = '''
         SELECT
             cr.mc_uid,
@@ -1644,7 +1644,7 @@ def api_storage_type_distribution():
     params = [run_id] + filter_params
 
     # Get data grouped by storage type
-    # 🔴 FIXED: Use .format() instead of f-string
+    # Use .format() instead of f-string
     query = '''
         SELECT
             cm.storage_type,
@@ -2013,7 +2013,7 @@ def api_current_vs_optimal_radar():
     params = [run_id] + filter_params
 
     # Calculate aggregate metrics
-    # 🔴 FIXED: Use .format() instead of f-string
+    # Use .format() instead of f-string
     query = '''
         SELECT
             SUM(cs_current.total_price) as total_current_cost,
@@ -2709,15 +2709,15 @@ if __name__ == '__main__':
     print("Open browser at: http://localhost:5000")
     print("=" * 80)
 
-    # 🔴 FIXED: Use environment variable for debug mode and host
+    # Use environment variable for debug mode and host
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 'yes')
     host = os.environ.get('FLASK_HOST', '127.0.0.1')  # Default to localhost only
     port = int(os.environ.get('FLASK_PORT', '5000'))
 
     if debug_mode:
-        logger.warning("⚠️  Running in DEBUG mode - DO NOT use in production!")
+        logger.warning("WARNING: Running in DEBUG mode - DO NOT use in production!")
     if host == '0.0.0.0':
-        logger.warning("⚠️  Server accessible from all network interfaces!")
+        logger.warning("WARNING: Server accessible from all network interfaces!")
 
     app.run(debug=debug_mode, host=host, port=port)
 
