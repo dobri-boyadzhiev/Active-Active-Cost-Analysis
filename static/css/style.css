@@ -343,7 +343,7 @@ main {
 }
 
 .breadcrumb-item a:hover {
-    text-decoration: underline;
+    color: #c22d23;
 }
 
 /* Alerts */
@@ -414,7 +414,7 @@ a {
 
 a:hover {
     color: #c22d23;
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 /* Form controls */
