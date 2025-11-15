@@ -85,19 +85,35 @@
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-graph-up"></i> Multi-Run Comparison</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Multi-Run Comparison
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Tracks Current Cost, Optimal Cost, and Total Savings across the last 10 analysis runs over time.<br><br><strong>Why it's important:</strong><br>Helps identify trends in your infrastructure costs and whether optimization efforts are having an impact.<br><br><strong>How it works:</strong><br>Displays three trend lines showing how costs and savings potential have evolved across multiple runs."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="multiRunComparisonChart"></canvas>
                 </div>
             </div>
         </div>
-        
+
         <!-- Savings Velocity -->
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-speedometer2"></i> Savings Velocity</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-speedometer2"></i> Savings Velocity
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>The change in total savings potential between consecutive analysis runs (delta).<br><br><strong>Why it's important:</strong><br>Positive changes (green) indicate growing savings opportunities, while negative changes (red) show improvements being implemented or infrastructure changes.<br><br><strong>How it works:</strong><br>Calculates the difference in total savings between each run and the previous run. Green bars = increasing savings potential, Red bars = decreasing savings potential."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="savingsVelocityChart"></canvas>
@@ -111,7 +127,15 @@
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-hourglass-split"></i> Cluster Age Distribution</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-hourglass-split"></i> Cluster Age Distribution
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Distribution of clusters grouped by age ranges (e.g., 0-6 months, 6-12 months, 1-2 years, etc.).<br><br><strong>Why it's important:</strong><br>Older clusters are more likely to be over-provisioned or using outdated instance types, making them prime candidates for optimization.<br><br><strong>How it works:</strong><br>Groups clusters by age since creation date and shows the count in each age bracket."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="clusterAgeDistributionChart"></canvas>
@@ -123,7 +147,15 @@
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-scatter-chart"></i> Age vs Savings Correlation</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-scatter-chart"></i> Age vs Savings Correlation
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Scatter plot showing the relationship between cluster age (in days) and savings potential.<br><br><strong>Why it's important:</strong><br>Helps identify if older clusters tend to have higher savings opportunities, validating the hypothesis that aging infrastructure becomes less cost-efficient.<br><br><strong>How it works:</strong><br>Each point represents a cluster, with X-axis showing age and Y-axis showing potential savings. Patterns reveal correlation between age and optimization opportunities."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="ageVsSavingsChart"></canvas>
@@ -137,7 +169,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Optimization Rate Trend Over Time</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up-arrow"></i> Optimization Rate Trend Over Time
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>The percentage of clusters that can be optimized (have positive savings potential) tracked across multiple runs.<br><br><strong>Why it's important:</strong><br>Shows whether your optimization efforts are reducing the number of inefficient clusters over time. A decreasing trend indicates successful optimization implementation.<br><br><strong>How it works:</strong><br>Calculates (Optimizable Clusters / Total Clusters) × 100 for each run and displays the trend line."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="optimizationRateTrendChart"></canvas>
@@ -156,7 +196,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-cloud-fill"></i> Cloud Provider Comparison</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-cloud-fill"></i> Cloud Provider Comparison
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Stacked bar chart comparing Current vs Optimal costs across different cloud providers (AWS, GCP, Azure), broken down by Instance and Storage costs.<br><br><strong>Why it's important:</strong><br>Identifies which cloud providers have the most optimization potential and helps compare cost efficiency across multi-cloud deployments.<br><br><strong>How it works:</strong><br>Groups clusters by cloud provider and shows current vs optimal costs with separate stacks for instance and storage components."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="cloudProviderComparisonChart"></canvas>
@@ -170,7 +218,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-stack"></i> Cost Breakdown by Component (Instance vs Storage)</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-stack"></i> Cost Breakdown by Component (Instance vs Storage)
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Detailed breakdown of costs separated into Instance (compute) and Storage components for current and optimal configurations.<br><br><strong>Why it's important:</strong><br>Helps identify whether savings opportunities come primarily from instance optimization or storage optimization, guiding targeted improvement efforts.<br><br><strong>How it works:</strong><br>Aggregates all cluster costs and separates them into instance and storage categories, comparing current vs optimal for each."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="costBreakdownByComponentChart"></canvas>
@@ -184,7 +240,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-geo-alt-fill"></i> Regional Cost Efficiency Matrix</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-geo-alt-fill"></i> Regional Cost Efficiency Matrix
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Comparison of cost efficiency across different geographic regions, showing average costs and savings potential by region.<br><br><strong>Why it's important:</strong><br>Different regions have different pricing structures. This helps identify which regions offer the best optimization opportunities and cost efficiency.<br><br><strong>How it works:</strong><br>Groups clusters by region and calculates average current cost, optimal cost, and savings percentage for each region."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="regionalCostEfficiencyChart"></canvas>
@@ -203,7 +267,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-diagram-3-fill"></i> Instance Type Efficiency Matrix</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-diagram-3-fill"></i> Instance Type Efficiency Matrix
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Bubble chart plotting instance types by average cost (X-axis) vs average savings percentage (Y-axis). Bubble size represents cluster count.<br><br><strong>Why it's important:</strong><br>Identifies which instance types are most cost-efficient and which ones consistently offer high savings potential when optimized.<br><br><strong>How it works:</strong><br>Each bubble represents an instance type. Position shows cost vs efficiency, size shows how common that instance type is in your infrastructure."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="instanceEfficiencyChart"></canvas>
@@ -222,19 +294,35 @@
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-pie-chart-fill"></i> Storage Type Distribution</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart-fill"></i> Storage Type Distribution
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Doughnut chart showing the distribution of different storage types (e.g., SSD, HDD, NVMe) across all clusters.<br><br><strong>Why it's important:</strong><br>Different storage types have different cost profiles. Understanding your storage mix helps identify opportunities to optimize storage costs.<br><br><strong>How it works:</strong><br>Groups clusters by storage type and shows the count and average savings for each type."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="storageTypeChart"></canvas>
                 </div>
             </div>
         </div>
-        
+
         <!-- Instance vs Storage Breakdown -->
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-stack"></i> Instance vs Storage Breakdown</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-stack"></i> Instance vs Storage Breakdown
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Horizontal stacked bar chart showing the top N clusters with savings broken down into Instance Savings and Storage Savings.<br><br><strong>Why it's important:</strong><br>Reveals whether savings come primarily from instance optimization or storage optimization for each cluster, helping prioritize specific optimization actions.<br><br><strong>How it works:</strong><br>For each top cluster, calculates separate savings for instance costs and storage costs, displaying them as stacked bars."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="instanceStorageBreakdownChart"></canvas>
@@ -253,7 +341,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-bar-chart"></i> Software Version Adoption & Cost</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart"></i> Software Version Adoption & Cost
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Multi-axis chart showing cluster count, average cost, and average savings percentage for each Redis/software version.<br><br><strong>Why it's important:</strong><br>Newer versions may have better performance characteristics or pricing. This helps identify if version upgrades could lead to cost savings.<br><br><strong>How it works:</strong><br>Groups clusters by software version and displays three metrics: count (bars), average cost (bars), and average savings % (line)."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="redisVersionChart"></canvas>
@@ -267,7 +363,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-diagram-2-fill"></i> Software Version Age Analysis</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-diagram-2-fill"></i> Software Version Age Analysis
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Correlation between software version and cluster age, showing which versions are used by older vs newer clusters.<br><br><strong>Why it's important:</strong><br>Helps identify if older clusters are running outdated software versions, which may contribute to inefficiency and higher costs.<br><br><strong>How it works:</strong><br>Groups clusters by software version and calculates average cluster age for each version, revealing version adoption patterns over time."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="softwareVersionAgeChart"></canvas>
@@ -286,7 +390,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-scatter-chart"></i> Cluster Size vs Savings Correlation</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-scatter-chart"></i> Cluster Size vs Savings Correlation
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Scatter plot showing the relationship between cluster size (current cost) and total savings potential.<br><br><strong>Why it's important:</strong><br>Reveals whether larger clusters tend to have proportionally higher savings opportunities. Helps prioritize optimization efforts based on cluster size.<br><br><strong>How it works:</strong><br>Each point represents a cluster with X-axis showing current monthly cost and Y-axis showing potential monthly savings."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="clusterSizeCorrelationChart"></canvas>
@@ -300,7 +412,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-grid-3x3-gap-fill"></i> Shards Count Distribution</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-grid-3x3-gap-fill"></i> Shards Count Distribution
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Distribution of clusters grouped by number of shards (e.g., 1-2 shards, 3-5 shards, 6-10 shards, etc.).<br><br><strong>Why it's important:</strong><br>Shard count directly impacts cost and complexity. Understanding your shard distribution helps identify over-sharded clusters that may be unnecessarily expensive.<br><br><strong>How it works:</strong><br>Groups clusters into shard count ranges and shows the number of clusters in each range."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="shardsCountDistributionChart"></canvas>
@@ -314,7 +434,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-box-seam"></i> Shards Distribution vs Cost (Box Plot)</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-box-seam"></i> Shards Distribution vs Cost (Box Plot)
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Box plot visualization showing the cost distribution for clusters grouped by shard count, including median, quartiles, and outliers.<br><br><strong>Why it's important:</strong><br>Reveals cost patterns and variability within each shard count category. Helps identify outliers and understand typical cost ranges for different shard configurations.<br><br><strong>How it works:</strong><br>Groups clusters by shard count and displays statistical distribution of costs (min, Q1, median, Q3, max) for each group."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="shardsDistributionCostChart"></canvas>
@@ -333,7 +461,15 @@
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-radar"></i> Current vs Optimal Radar</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-radar"></i> Current vs Optimal Radar
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Radar chart comparing current vs optimal configurations across multiple dimensions (instance cost, storage cost, total cost, etc.) on a normalized 0-100 scale.<br><br><strong>Why it's important:</strong><br>Provides a holistic view of how current infrastructure compares to optimal across all key metrics simultaneously.<br><br><strong>How it works:</strong><br>Normalizes all metrics to a 0-100 scale and plots current (red) vs optimal (green) configurations as overlapping polygons."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="radarChart"></canvas>
@@ -345,7 +481,15 @@
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Current vs Optimal Comparison</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart-fill"></i> Current vs Optimal Comparison
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Side-by-side bar comparison of current vs optimal costs for the top N clusters.<br><br><strong>Why it's important:</strong><br>Provides a clear visual comparison of the cost gap between current and optimal configurations for high-priority clusters.<br><br><strong>How it works:</strong><br>Displays paired bars for each cluster showing current cost (red) and optimal cost (green), making the savings opportunity immediately visible."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="currentVsOptimalChart"></canvas>
@@ -364,7 +508,15 @@
         <div class="col-md-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-list-ol"></i> Top 10 Clusters by Optimization Priority</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-list-ol"></i> Top 10 Clusters by Optimization Priority
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Ranked list of clusters with the highest optimization priority scores, combining both absolute savings and percentage savings.<br><br><strong>Why it's important:</strong><br>Provides a prioritized action list for optimization efforts, balancing high-dollar savings with high-percentage improvements.<br><br><strong>How it works:</strong><br>Calculates a priority score based on a weighted combination of total savings amount and savings percentage, then ranks clusters accordingly."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="optimizationPriorityChart"></canvas>
@@ -383,7 +535,15 @@
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-bar-chart-line"></i> Savings Distribution</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart-line"></i> Savings Distribution
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Histogram showing how many clusters fall into different savings ranges (e.g., $0-500, $500-1000, $1000-2000, etc.).<br><br><strong>Why it's important:</strong><br>Reveals the distribution of savings opportunities across your infrastructure. Helps understand if savings are concentrated in a few large clusters or spread across many smaller ones.<br><br><strong>How it works:</strong><br>Groups clusters into savings amount buckets and counts how many clusters fall into each range."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="savingsDistributionChart"></canvas>
@@ -397,7 +557,15 @@
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-trophy-fill"></i> Top Clusters by Savings</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-trophy-fill"></i> Top Clusters by Savings
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Horizontal bar chart ranking the top N clusters by total monthly savings potential.<br><br><strong>Why it's important:</strong><br>Identifies the highest-value optimization targets. These clusters should be prioritized for immediate action to maximize ROI.<br><br><strong>How it works:</strong><br>Sorts all clusters by total savings (current cost - optimal cost) and displays the top N with the highest savings potential."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="topClustersChart"></canvas>
@@ -409,7 +577,15 @@
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-pie-chart"></i> Savings Breakdown</h6>
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart"></i> Savings Breakdown
+                        <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                           data-bs-toggle="popover"
+                           data-bs-trigger="hover focus"
+                           data-bs-placement="top"
+                           data-bs-html="true"
+                           data-bs-content="<strong>What it shows:</strong><br>Pie chart showing the proportion of total savings that comes from instance optimization vs storage optimization.<br><br><strong>Why it's important:</strong><br>Reveals whether optimization efforts should focus more on instance types or storage configurations to maximize impact.<br><br><strong>How it works:</strong><br>Aggregates all instance savings and all storage savings separately, then displays them as percentage slices of the total savings pie."></i>
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="savingsBreakdownChart"></canvas>
@@ -431,6 +607,12 @@ let charts = {};
 
 // Initialize all charts on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap popovers for info icons
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+
     if (currentRunId) {
         loadFilters(currentRunId);
         loadAllCharts();
