@@ -1,4 +1,8 @@
-Flask>=3.0.0
+# Optional: For .env file support
 python-dotenv>=1.0.0
-gunicorn>=21.2.0
 
+# Note: All other dependencies are built-in Python modules
+# - sqlite3, json, datetime, logging (built-in)
+# - dataclasses, typing, pathlib (built-in Python 3.7+)
+# - subprocess, os, sys, time (built-in)
+# - rcp_client (already installed in system)

@@ -1,6 +1,6 @@
 # Quick Start Guide - Production Server
 
-## 🚀 Quick Reference for Production Server
+## Quick Reference for Production Server
 
 ### Location
 ```
@@ -9,7 +9,7 @@
 
 ---
 
-## ⚡ Manual Execution
+## Manual Execution
 
 ```bash
 # Test with 5 clusters
@@ -25,7 +25,7 @@ sudo ./run_aa_report_with_creds.sh --log-level DEBUG --limit 1
 
 ---
 
-## 📊 Check Results
+## Check Results
 
 ```bash
 # View logs
@@ -43,7 +43,7 @@ gsutil ls -l gs://active-active-cost-analysis/
 
 ---
 
-## ⏰ Cron Job
+## Cron Job
 
 ```bash
 # View cron jobs
@@ -58,7 +58,7 @@ sudo crontab -e
 
 ---
 
-## 🔧 Change Password
+## Change Password
 
 ```bash
 # Edit wrapper
@@ -72,7 +72,7 @@ sudo nano /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
 
 ---
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### Permission denied
 ```bash
@@ -93,7 +93,7 @@ sudo pkill -f aa_report_automation.py
 
 ---
 
-## 📚 Full Documentation
+## Full Documentation
 
 See **[SERVER_SETUP.md](SERVER_SETUP.md)** for complete instructions!
 

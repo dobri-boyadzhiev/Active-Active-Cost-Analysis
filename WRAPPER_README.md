@@ -1,6 +1,6 @@
 # Wrapper Scripts - Why and How
 
-## 🤔 Why Use Wrapper Scripts?
+## Why Use Wrapper Scripts?
 
 ### Problem: Virtual Environment Conflicts
 
@@ -11,7 +11,7 @@ The `rcp_client` library is installed in a virtual environment:
 
 If you run `source /var/vault-users-python3.11-env/bin/activate` in your shell (especially as root):
 
-❌ **Problems:**
+**Problems:**
 - Changes global PATH for all subsequent commands
 - Affects other scripts running in the same shell
 - Can break system tools that rely on system Python
@@ -20,7 +20,7 @@ If you run `source /var/vault-users-python3.11-env/bin/activate` in your shell (
 
 ### Solution: Wrapper Scripts
 
-✅ **Benefits:**
+**Benefits:**
 - Activates venv **only** for the AA report script
 - Isolated execution (doesn't affect shell environment)
 - Safe for cron jobs
@@ -29,7 +29,7 @@ If you run `source /var/vault-users-python3.11-env/bin/activate` in your shell (
 
 ---
 
-## 📦 Available Wrapper Scripts
+## Available Wrapper Scripts
 
 ### 1. `run_aa_report_with_creds.sh` (Recommended for Production)
 
@@ -57,12 +57,12 @@ sudo ./run_aa_report_with_creds.sh --limit 5
 ```
 
 **Pros:**
-- ✅ Self-contained (no external .env file needed)
-- ✅ Easy to use
-- ✅ Perfect for cron jobs
+- Self-contained (no external .env file needed)
+- Easy to use
+- Perfect for cron jobs
 
 **Cons:**
-- ⚠️ Credentials in script (must protect with chmod 700)
+- Credentials in script (must protect with chmod 700)
 
 ---
 
@@ -95,15 +95,15 @@ sudo ./run_aa_report.sh --limit 5
 ```
 
 **Pros:**
-- ✅ Credentials separate from code
-- ✅ Can share wrapper script without exposing credentials
+- Credentials separate from code
+- Can share wrapper script without exposing credentials
 
 **Cons:**
-- ⚠️ Requires .env file with correct permissions
+- Requires .env file with correct permissions
 
 ---
 
-## 🔒 Security Comparison
+## Security Comparison
 
 ### Option A: Wrapper with embedded credentials
 ```bash
@@ -129,14 +129,14 @@ sudo ./run_aa_report.sh --limit 5
 ```bash
 # Must activate venv in shell
 source /var/vault-users-python3.11-env/bin/activate
-# ❌ Affects entire shell session
-# ❌ Risky for root
-# ❌ Hard to use in cron
+# Affects entire shell session
+# Risky for root
+# Hard to use in cron
 ```
 
 ---
 
-## 🚀 How Wrapper Scripts Work
+## How Wrapper Scripts Work
 
 ```bash
 #!/bin/bash
@@ -164,7 +164,7 @@ export RCP_PASSWORD="password"
 
 ---
 
-## 📋 Cron Job Examples
+## Cron Job Examples
 
 ### Using wrapper with credentials (Recommended)
 ```bash
@@ -192,14 +192,14 @@ crontab -e
 
 ---
 
-## ✅ Recommendation
+## Recommendation
 
 **Use `run_aa_report_with_creds.sh`** because:
-1. ✅ Simplest setup
-2. ✅ Most reliable for cron
-3. ✅ Self-contained
-4. ✅ Easy to troubleshoot
-5. ✅ No .env permission issues
+1. Simplest setup
+2. Most reliable for cron
+3. Self-contained
+4. Easy to troubleshoot
+5. No .env permission issues
 
 Just remember to:
 - `chmod 700` to protect credentials
@@ -208,7 +208,7 @@ Just remember to:
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Test wrapper
@@ -224,7 +224,7 @@ gsutil ls gs://active-active-cost-analysis/
 
 ---
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### "Permission denied" when running wrapper
 ```bash

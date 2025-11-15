@@ -1,14 +1,14 @@
 # Documentation Index
 
-## 🎯 Where to Find What
+## Where to Find What
 
 ### For Production Server (ip-10-0-0-88)
 
 | Document | When to Use |
 |----------|-------------|
-| **[QUICKSTART.md](QUICKSTART.md)** | 🔥 Quick reference - frequently used commands |
-| **[SERVER_SETUP.md](SERVER_SETUP.md)** | 📖 Complete setup and maintenance documentation |
-| **[WRAPPER_README.md](WRAPPER_README.md)** | 🤔 Why wrapper scripts? How do they work? |
+| **[QUICKSTART.md](QUICKSTART.md)** | Quick reference - frequently used commands |
+| **[SERVER_SETUP.md](SERVER_SETUP.md)** | Complete setup and maintenance documentation |
+| **[WRAPPER_README.md](WRAPPER_README.md)** | Why wrapper scripts? How do they work? |
 
 ---
 
@@ -16,16 +16,16 @@
 
 | Document | When to Use |
 |----------|-------------|
-| **[README.md](README.md)** | 👋 Project overview |
-| **[SETUP.md](SETUP.md)** | 🔧 General setup instructions |
-| **[CHANGELOG.md](CHANGELOG.md)** | 📝 What has changed |
-| **[DEPLOYMENT.md](DEPLOYMENT.md)** | ☁️ Cloud Run deployment guide |
-| **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)** | ⚙️ Environment variables reference |
-| **[RCP.md](RCP.md)** | 🤖 RCP automation tool documentation |
+| **[README.md](README.md)** | Project overview |
+| **[SETUP.md](SETUP.md)** | General setup instructions |
+| **[CHANGELOG.md](CHANGELOG.md)** | What has changed |
+| **[DEPLOYMENT.md](DEPLOYMENT.md)** | Cloud Run deployment guide |
+| **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)** | Environment variables reference |
+| **[RCP.md](RCP.md)** | RCP automation tool documentation |
 
 ---
 
-## 🚀 Frequently Used Commands
+## Frequently Used Commands
 
 ### Manual Execution
 ```bash
@@ -50,7 +50,7 @@ gsutil ls -l gs://active-active-cost-analysis/
 
 ---
 
-## 📂 File Structure
+## File Structure
 
 ```
 /opt/active-active-cost-analysis/
@@ -65,7 +65,7 @@ gsutil ls -l gs://active-active-cost-analysis/
 
 ---
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 | Problem | Solution | Document |
 |---------|----------|----------|
@@ -76,7 +76,7 @@ gsutil ls -l gs://active-active-cost-analysis/
 
 ---
 
-## 📞 Quick Reference
+## Quick Reference
 
 ### Important Paths
 - **App:** `/opt/active-active-cost-analysis/`

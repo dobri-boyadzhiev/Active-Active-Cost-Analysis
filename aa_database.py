@@ -341,7 +341,7 @@ class AADatabase:
             FROM runs r
             JOIN cluster_results cr ON r.run_id = cr.run_id
             JOIN cluster_singles cs ON cr.result_id = cs.result_id
-            WHERE r.status = 'completed' AND cr.status = 'success'
+            WHERE r.status = 'completed' AND cr.status = 'success' AND cr.total_savings > 0
             GROUP BY r.run_id ORDER BY r.run_timestamp DESC LIMIT ?
         ''', (limit,))
 

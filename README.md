@@ -2,19 +2,19 @@
 
 Flask web dashboard for visualizing Redis cluster optimization data and cost savings opportunities.
 
-## 📚 Documentation
+## Documentation
 
-👉 **[DOCS_INDEX.md](DOCS_INDEX.md)** - Complete documentation index
+**[DOCS_INDEX.md](DOCS_INDEX.md)** - Complete documentation index
 
 ### Quick Links
-- 🔥 **[QUICKSTART.md](QUICKSTART.md)** - Quick reference for production server
-- 📖 **[SERVER_SETUP.md](SERVER_SETUP.md)** - Complete production setup documentation
-- 🤔 **[WRAPPER_README.md](WRAPPER_README.md)** - Why wrapper scripts?
-- 🔧 **[SETUP.md](SETUP.md)** - General setup instructions
-- 📝 **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
-- ☁️ **[DEPLOYMENT.md](DEPLOYMENT.md)** - Cloud Run deployment guide
-- ⚙️ **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)** - Environment variables reference
-- 🤖 **[RCP.md](RCP.md)** - RCP automation tool documentation
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick reference for production server
+- **[SERVER_SETUP.md](SERVER_SETUP.md)** - Complete production setup documentation
+- **[WRAPPER_README.md](WRAPPER_README.md)** - Why wrapper scripts?
+- **[SETUP.md](SETUP.md)** - General setup instructions
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Cloud Run deployment guide
+- **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)** - Environment variables reference
+- **[RCP.md](RCP.md)** - RCP automation tool documentation
 
 ---
 

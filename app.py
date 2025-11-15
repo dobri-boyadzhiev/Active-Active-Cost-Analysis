@@ -197,19 +197,22 @@ def dashboard():
             'failed': latest_run['failed_clusters'],
         }
 
-        # Calculate comprehensive metrics
+        # Calculate comprehensive metrics (ONLY for clusters with positive savings)
+        # Note: We use subqueries for total_savings and avg_savings to avoid duplication from JOIN
         metrics_data = db.conn.execute('''
             SELECT
-                SUM(cr.total_savings) as total_savings,
+                (SELECT SUM(total_savings) FROM cluster_results
+                 WHERE run_id = ? AND status = 'success' AND total_savings > 0) as total_savings,
                 SUM(CASE WHEN cs.cluster_type = 'current' THEN cs.total_price ELSE 0 END) as total_current,
                 SUM(CASE WHEN cs.cluster_type = 'optimal' THEN cs.total_price ELSE 0 END) as total_optimal,
-                AVG(cr.total_savings) as avg_savings,
+                (SELECT AVG(total_savings) FROM cluster_results
+                 WHERE run_id = ? AND status = 'success' AND total_savings > 0) as avg_savings,
                 COUNT(DISTINCT cr.mc_uid) as optimizable_clusters,
                 COUNT(DISTINCT CASE WHEN cr.total_savings > 2000 THEN cr.mc_uid END) as high_impact_clusters
             FROM cluster_results cr
             JOIN cluster_singles cs ON cr.result_id = cs.result_id
-            WHERE cr.run_id = ? AND cr.status = 'success'
-        ''', (run_id,)).fetchone()
+            WHERE cr.run_id = ? AND cr.status = 'success' AND cr.total_savings > 0
+        ''', (run_id, run_id, run_id)).fetchone()
 
         total_savings = metrics_data['total_savings'] or 0
         total_current = metrics_data['total_current'] or 0
@@ -218,26 +221,26 @@ def dashboard():
         optimizable_clusters = metrics_data['optimizable_clusters'] or 0
         high_impact_clusters = metrics_data['high_impact_clusters'] or 0
 
-        # Calculate median savings
+        # Calculate median savings (only for positive savings)
         median_savings_row = db.conn.execute('''
             SELECT total_savings
             FROM cluster_results
-            WHERE run_id = ? AND status = 'success'
+            WHERE run_id = ? AND status = 'success' AND total_savings > 0
             ORDER BY total_savings
             LIMIT 1 OFFSET (
                 SELECT COUNT(*) / 2
                 FROM cluster_results
-                WHERE run_id = ? AND status = 'success'
+                WHERE run_id = ? AND status = 'success' AND total_savings > 0
             )
         ''', (run_id, run_id)).fetchone()
         median_savings = median_savings_row['total_savings'] if median_savings_row else 0
 
-        # Get previous run for comparison
+        # Get previous run for comparison (only positive savings)
         previous_run = db.conn.execute('''
             SELECT run_id,
                    (SELECT SUM(total_savings)
                     FROM cluster_results
-                    WHERE run_id = runs.run_id AND status = 'success') as total_savings
+                    WHERE run_id = runs.run_id AND status = 'success' AND total_savings > 0) as total_savings
             FROM runs
             WHERE status = 'completed' AND run_id < ?
             ORDER BY run_timestamp DESC
@@ -253,14 +256,14 @@ def dashboard():
         # Calculate optimization rate
         optimization_rate = (optimizable_clusters / stats['total_clusters'] * 100) if stats['total_clusters'] > 0 else 0
 
-        # Calculate instance vs storage savings breakdown
+        # Calculate instance vs storage savings breakdown (only positive savings)
         storage_savings_row = db.conn.execute('''
             SELECT
                 SUM(CASE WHEN cs.cluster_type = 'current' THEN cs.storage_price ELSE 0 END) -
                 SUM(CASE WHEN cs.cluster_type = 'optimal' THEN cs.storage_price ELSE 0 END) as storage_savings
             FROM cluster_results cr
             JOIN cluster_singles cs ON cr.result_id = cs.result_id
-            WHERE cr.run_id = ? AND cr.status = 'success'
+            WHERE cr.run_id = ? AND cr.status = 'success' AND cr.total_savings > 0
         ''', (run_id,)).fetchone()
         storage_savings = storage_savings_row['storage_savings'] or 0
 
@@ -692,6 +695,9 @@ def top_savings():
         if top_n != 'all':
             opportunities = opportunities[:top_n]
 
+        # Calculate optimizable clusters count (positive savings only)
+        optimizable_count = len([opp for opp in opportunities if opp.get('savings', 0) > 0])
+
         # Get selected run info
         if run_id:
             selected_run = db.conn.execute('''
@@ -702,6 +708,7 @@ def top_savings():
 
         return render_template('top_savings.html',
                              opportunities=opportunities,
+                             optimizable_count=optimizable_count,
                              all_runs=[dict(r) for r in all_runs],
                              selected_run=dict(selected_run) if selected_run else None,
                              cloud_provider_filter=cloud_provider_filter,
@@ -1004,7 +1011,7 @@ def api_savings_breakdown():
         db.close()
         return jsonify({'labels': [], 'data': []})
 
-    # Calculate instance and storage savings
+    # Calculate instance and storage savings (only positive savings)
     result = db.conn.execute('''
         SELECT
             SUM(CASE WHEN cs.cluster_type = 'current' THEN cs.instance_price ELSE 0 END) -
@@ -1013,7 +1020,7 @@ def api_savings_breakdown():
             SUM(CASE WHEN cs.cluster_type = 'optimal' THEN cs.storage_price ELSE 0 END) as storage_savings
         FROM cluster_results cr
         JOIN cluster_singles cs ON cr.result_id = cs.result_id
-        WHERE cr.run_id = ? AND cr.status = 'success'
+        WHERE cr.run_id = ? AND cr.status = 'success' AND cr.total_savings > 0
     ''', (run_id,)).fetchone()
 
     instance_savings = max(0, result['instance_savings'] or 0)
@@ -1375,18 +1382,20 @@ def api_multi_run_comparison():
     avg_savings_data = []
 
     for run in runs:
-        # Get aggregated data for this run
+        # Get aggregated data for this run (only positive savings)
+        # Note: Use subquery for total_savings to avoid duplication from JOINs
         stats = db.conn.execute('''
             SELECT
                 SUM(cs_current.total_price) as total_current,
                 SUM(cs_optimal.total_price) as total_optimal,
-                SUM(cr.total_savings) as total_savings,
+                (SELECT SUM(total_savings) FROM cluster_results
+                 WHERE run_id = ? AND status = 'success' AND total_savings > 0) as total_savings,
                 COUNT(DISTINCT cr.result_id) as cluster_count
             FROM cluster_results cr
             LEFT JOIN cluster_singles cs_current ON cr.result_id = cs_current.result_id AND cs_current.cluster_type = 'current'
             LEFT JOIN cluster_singles cs_optimal ON cr.result_id = cs_optimal.result_id AND cs_optimal.cluster_type = 'optimal'
-            WHERE cr.run_id = ? AND cr.status = 'success'
-        ''', (run['run_id'],)).fetchone()
+            WHERE cr.run_id = ? AND cr.status = 'success' AND cr.total_savings > 0
+        ''', (run['run_id'], run['run_id'])).fetchone()
 
         if stats and stats['total_current']:
             labels.append(f"Run #{run['run_id']}\n{run['run_timestamp'][:10]}")
@@ -1437,11 +1446,11 @@ def api_savings_velocity():
     previous_savings = None
 
     for run in runs:
-        # Get total savings for this run
+        # Get total savings for this run (only positive savings)
         stats = db.conn.execute('''
             SELECT SUM(cr.total_savings) as total_savings
             FROM cluster_results cr
-            WHERE cr.run_id = ? AND cr.status = 'success'
+            WHERE cr.run_id = ? AND cr.status = 'success' AND cr.total_savings > 0
         ''', (run['run_id'],)).fetchone()
 
         current_savings = stats['total_savings'] if stats and stats['total_savings'] else 0
@@ -2376,20 +2385,28 @@ def api_regional_cost_efficiency():
         db.close()
         return jsonify({'data': []})
 
-    # Build filter clause
+    # Build filter clause (only positive savings)
     filter_clauses, filter_params = build_filter_clause(cloud_provider, software_version)
-    where_clauses = ['cr.run_id = ?', 'cr.status = "success"'] + filter_clauses
+    where_clauses = ['cr.run_id = ?', 'cr.status = "success"', 'cr.total_savings > 0'] + filter_clauses
     where_clause = ' AND '.join(where_clauses)
     params = [run_id] + filter_params
 
     # Get data grouped by region and cloud provider
+    # Note: Use COUNT(DISTINCT) and subquery to avoid duplication from multiple 'current' configs per cluster
     query = '''
         SELECT
             cm.region,
             cm.cloud_provider,
-            COUNT(*) as cluster_count,
+            COUNT(DISTINCT cr.mc_uid) as cluster_count,
             AVG(cs.total_price) as avg_cost_per_cluster,
-            SUM(cr.total_savings) as total_savings
+            (SELECT SUM(cr2.total_savings)
+             FROM cluster_results cr2
+             LEFT JOIN cluster_metadata cm2 ON cr2.mc_uid = cm2.mc_uid
+             WHERE cr2.run_id = cr.run_id
+             AND cr2.status = 'success'
+             AND cr2.total_savings > 0
+             AND cm2.region = cm.region
+             AND cm2.cloud_provider = cm.cloud_provider) as total_savings
         FROM cluster_results cr
         JOIN cluster_singles cs ON cr.result_id = cs.result_id AND cs.cluster_type = 'current'
         LEFT JOIN cluster_metadata cm ON cr.mc_uid = cm.mc_uid

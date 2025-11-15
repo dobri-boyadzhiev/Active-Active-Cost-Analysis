@@ -66,7 +66,7 @@ Save the output - you'll need it for deployment.
    - Name: `gcs-volume`
    - Bucket: `YOUR_BUCKET_NAME`
    - Mount path: `/mnt/gcs`
-   - Read-only: ✅ (recommended)
+   - Read-only: Yes (recommended)
 
 8. Click **Create**
 
@@ -231,10 +231,10 @@ Go to [Cloud Run Console](https://console.cloud.google.com/run) → Select servi
 
 ## Security
 
-- ✅ **HTTPS**: Automatically provided by Cloud Run
-- ✅ **Read-only database**: GCS volume mounted read-only
-- ✅ **No public write access**: Application only reads data
-- ⚠️ **Authentication**: Currently allows unauthenticated access
+- **HTTPS**: Automatically provided by Cloud Run
+- **Read-only database**: GCS volume mounted read-only
+- **No public write access**: Application only reads data
+- **Authentication**: Currently allows unauthenticated access
   - Add Cloud IAP or custom auth if needed
 
 ---
@@ -269,11 +269,11 @@ gcloud run services update-traffic aa-cost-analysis \
 ## Docker Build Notes
 
 The `.dockerignore` file is configured to:
-- ✅ **Include** `aa_database.py` (required by the application)
-- ❌ **Exclude** `aa_report_automation.py` (automation script, not needed in Cloud Run)
-- ❌ **Exclude** `rcp/` folder (legacy location)
-- ❌ **Exclude** `*.db` files (database is mounted from GCS)
-- ❌ **Exclude** documentation files from root
+- **Include** `aa_database.py` (required by the application)
+- **Exclude** `aa_report_automation.py` (automation script, not needed in Cloud Run)
+- **Exclude** `rcp/` folder (legacy location)
+- **Exclude** `*.db` files (database is mounted from GCS)
+- **Exclude** documentation files from root
 
 This ensures the Docker image contains only necessary files for the web application.
 

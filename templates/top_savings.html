@@ -6,7 +6,7 @@
 <div class="row mb-4 align-items-center">
     <div class="col-md-6">
         <h1 class="h2 mb-2">
-            <i class="bi bi-trophy"></i> Top Savings Opportunities
+            <i class="bi bi-trophy"></i> Savings Opportunities
         </h1>
         <p class="text-muted mb-0" style="font-size: 0.95rem;">Clusters with highest potential cost savings</p>
     </div>
@@ -84,7 +84,15 @@
     <div class="col">
         <div class="card">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h4 class="mb-0"><i class="bi bi-table"></i> Top {{ opportunities | length }} Savings Opportunities</h4>
+                <h4 class="mb-0">
+                    <i class="bi bi-table"></i> {{ optimizable_count }} Savings Opportunities of {{ opportunities | length }}
+                    <i class="bi bi-info-circle ms-1" style="cursor: pointer; font-size: 0.9rem;"
+                       data-bs-toggle="popover"
+                       data-bs-trigger="hover focus"
+                       data-bs-placement="bottom"
+                       data-bs-html="true"
+                       data-bs-content="<strong>{{ optimizable_count }}</strong> clusters with positive savings (optimization opportunities)<br><strong>{{ opportunities | length }}</strong> total clusters shown (including non-optimizable)"></i>
+                </h4>
                 <button type="button" class="btn btn-light btn-sm" id="exportCsvBtn" title="Export visible table data to CSV">
                     <i class="bi bi-download"></i> Export to CSV
                 </button>
@@ -110,7 +118,7 @@
                         </thead>
                         <tbody>
                             {% for cluster in opportunities %}
-                            <tr>
+                            <tr{% if cluster.savings <= 0 %} class="table-secondary" style="opacity: 0.6;"{% endif %}>
                                 <td><strong>{{ loop.index }}</strong></td>
                                 <td><code>{{ cluster.mc_uid }}</code></td>
                                 <td>
@@ -182,18 +190,20 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-warning fw-bold">
-                                <td colspan="7">TOTAL</td>
+                                <td colspan="7">
+                                    TOTAL
+                                    <i class="bi bi-info-circle ms-1" style="cursor: pointer;"
+                                       data-bs-toggle="popover"
+                                       data-bs-trigger="hover focus"
+                                       data-bs-placement="top"
+                                       data-bs-html="true"
+                                       data-bs-content="<strong>Total Calculation:</strong><br>Sums <strong>only clusters with positive savings</strong> (optimization opportunities).<br><br><strong>Note:</strong> Clusters with negative or zero savings are shown in the table but excluded from the total, as they don't represent optimization opportunities."></i>
+                                </td>
                                 <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='current_price')) }}</td>
                                 <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='optimal_price')) }}</td>
                                 <td class="text-end">
-                                    {% set total_savings = opportunities | sum(attribute='savings') %}
-                                    {% if total_savings > 0 %}
+                                    {% set total_savings = opportunities | selectattr('savings', 'gt', 0) | sum(attribute='savings') %}
                                     <span class="text-danger">${{ "{:,.2f}".format(total_savings) }}</span>
-                                    {% elif total_savings < 0 %}
-                                    <span class="text-success">${{ "{:,.2f}".format(total_savings) }}</span>
-                                    {% else %}
-                                    ${{ "{:,.2f}".format(total_savings) }}
-                                    {% endif %}
                                 </td>
                                 <td colspan="2"></td>
                             </tr>
@@ -234,7 +244,7 @@ $(document).ready(function() {
         paging: false,
         searching: false,
         info: false,
-        order: [[4, 'desc']]
+        order: [[9, 'desc']]  // Sort by Savings column (highest first)
     });
 });
 

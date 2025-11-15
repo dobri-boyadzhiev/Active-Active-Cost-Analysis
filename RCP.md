@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Quick Start](#quick-start)
@@ -22,20 +22,20 @@
 
 ---
 
-## 🎯 Overview
+## Overview
 
 AA Report Automation Tool automates the process of analyzing and optimizing Active-Active Redis clusters via RCP API. The system retrieves current configurations, plans optimal configurations, and calculates potential savings.
 
 ### Key Features
 
-✅ **Automated Cluster Discovery** - Automatically retrieve all AA clusters
-✅ **Blueprint Analysis** - Analyze current configurations
-✅ **Optimization Planning** - Plan optimal configurations
-✅ **Cost Calculation** - Calculate savings (current vs optimal)
-✅ **Historical Tracking** - SQLite database for historical analysis
-✅ **Resume Capability** - Resume interrupted runs
-✅ **Rate Limiting** - Protection against API throttling
-✅ **Monolithic Design** - Simple 3-file architecture
+- **Automated Cluster Discovery** - Automatically retrieve all AA clusters
+- **Blueprint Analysis** - Analyze current configurations
+- **Optimization Planning** - Plan optimal configurations
+- **Cost Calculation** - Calculate savings (current vs optimal)
+- **Historical Tracking** - SQLite database for historical analysis
+- **Resume Capability** - Resume interrupted runs
+- **Rate Limiting** - Protection against API throttling
+- **Monolithic Design** - Simple 3-file architecture
 
 ### Technology Stack
 
@@ -57,7 +57,7 @@ rcp/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -116,7 +116,7 @@ python aa_report_automation.py --limit 5 --log-level DEBUG
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Monolithic Design
 
@@ -167,7 +167,7 @@ aa_database.py (Database Layer - 350 lines)
 
 ---
 
-## 📊 Data Models
+## Data Models
 
 ### Core Classes (aa_report_automation.py)
 
@@ -219,7 +219,7 @@ class MultiClusterResult:
 
 ---
 
-## 💾 Database Schema
+## Database Schema
 
 ### Tables
 
@@ -306,7 +306,7 @@ CREATE INDEX idx_cluster_metadata_software_version ON cluster_metadata(software_
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Environment Variables (Recommended)
 
@@ -348,7 +348,7 @@ class Config:
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
 ### Step 1: Copy Files to Server
 
@@ -400,7 +400,7 @@ python aa_report_automation.py
 
 ---
 
-## ⏰ Scheduling
+## Scheduling
 
 ### Cron Job Setup
 
@@ -486,7 +486,7 @@ sudo systemctl status aa-report.timer
 
 ---
 
-## 📊 Monitoring
+## Monitoring
 
 ### Check Run Status
 
@@ -534,7 +534,7 @@ grep "Processing mc-" /home/user/logs/aa_report.log | wc -l
 
 ---
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -594,7 +594,7 @@ print('Connection successful!')
 
 ---
 
-## 📈 Analysis Tools
+## Analysis Tools
 
 ### SQL Queries
 
@@ -652,7 +652,7 @@ LIMIT 10;
 
 ---
 
-## 🗄️ Database Maintenance
+## Database Maintenance
 
 ### Backup
 
@@ -688,7 +688,7 @@ sqlite3 ~/aa_report_cache.db "VACUUM;"
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
 ### Documentation
 
@@ -725,7 +725,7 @@ sqlite3 ~/aa_report_cache.db "VACUUM;"
 
 ---
 
-## 📞 Support
+## Support
 
 **For questions or issues:**
 - Review this documentation
@@ -736,7 +736,7 @@ sqlite3 ~/aa_report_cache.db "VACUUM;"
 
 ---
 
-## ✅ Deployment Checklist
+## Deployment Checklist
 
 - [ ] Python 3.7+ installed
 - [ ] Dependencies installed (`requests`, `tabulate`)
@@ -753,7 +753,7 @@ sqlite3 ~/aa_report_cache.db "VACUUM;"
 
 ---
 
-## 📜 License
+## License
 
 Internal use only - Redis Ltd.
 

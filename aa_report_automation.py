@@ -585,6 +585,14 @@ def run_report_generation(limit: Optional[int] = None) -> None:
         processed_count = generate_aa_report(rcp_client, db, run_id, limit=limit)
         db.complete_run(run_id, None)
 
+        # Force WAL checkpoint to ensure all data is written to main DB file
+        # This is critical for GCS upload to get complete data
+        logger.info("Flushing database writes (WAL checkpoint)...")
+        db.conn.execute("PRAGMA wal_checkpoint(FULL)")
+        db.conn.commit()
+        time.sleep(2)  # Give filesystem time to sync
+        logger.info("Database flush complete")
+
         # Upload database to GCS
         if Config.ENABLE_GCS_UPLOAD:
             logger.info("Uploading database to GCS...")

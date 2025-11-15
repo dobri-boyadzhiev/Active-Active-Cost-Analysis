@@ -6,7 +6,7 @@ Complete reference for all environment variables used in Active-Active Cost Anal
 
 ## Required Variables
 
-### `SECRET_KEY` ✅
+### `SECRET_KEY`
 
 **Purpose**: Flask session encryption and security
 
@@ -18,9 +18,9 @@ python -c "import os; print(os.urandom(24).hex())"
 **Example**: `f86e2e839582e12cfa91a5a00c5620fe1affda5390c5b2be`
 
 **Security**:
-- ⚠️ Keep secret - never commit to Git
-- ⚠️ Use different keys for dev/staging/prod
-- ⚠️ Rotate periodically
+- Keep secret - never commit to Git
+- Use different keys for dev/staging/prod
+- Rotate periodically
 
 **Cloud Run**:
 ```bash
@@ -29,7 +29,7 @@ python -c "import os; print(os.urandom(24).hex())"
 
 ---
 
-### `GCS_MOUNT_PATH` ✅
+### `GCS_MOUNT_PATH`
 
 **Purpose**: Path where GCS bucket is mounted for database persistence
 
@@ -46,7 +46,7 @@ python -c "import os; print(os.urandom(24).hex())"
 
 ---
 
-### `PATH_PREFIX` ✅
+### `PATH_PREFIX`
 
 **Purpose**: URL path prefix for routing through Google Load Balancer
 
@@ -85,7 +85,7 @@ FLASK_DEBUG=True
 FLASK_DEBUG=False
 ```
 
-**Security**: ⚠️ **NEVER** enable debug mode in production!
+**Security**: **NEVER** enable debug mode in production!
 
 ---
 
@@ -253,12 +253,12 @@ gcloud run services logs read aa-cost-analysis --region europe-west1 --limit 50
 
 ## Security Best Practices
 
-1. ✅ **Never commit `.env` file** - add to `.gitignore`
-2. ✅ **Use Secret Manager** for production secrets (optional)
-3. ✅ **Rotate SECRET_KEY** periodically
-4. ✅ **Disable debug mode** in production (`FLASK_DEBUG=False`)
-5. ✅ **Use HTTPS** (automatic with Cloud Run)
-6. ✅ **Limit environment variable access** to authorized users only
+1. **Never commit `.env` file** - add to `.gitignore`
+2. **Use Secret Manager** for production secrets (optional)
+3. **Rotate SECRET_KEY** periodically
+4. **Disable debug mode** in production (`FLASK_DEBUG=False`)
+5. **Use HTTPS** (automatic with Cloud Run)
+6. **Limit environment variable access** to authorized users only
 
 ---
 

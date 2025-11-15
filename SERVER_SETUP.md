@@ -1,7 +1,7 @@
 # Active-Active Cost Analysis - Server Setup Guide
 # Complete Server Setup Documentation
 
-## 📋 Overview
+## Overview
 
 This document describes how to setup and maintain AA Cost Analysis automation on production server.
 
@@ -12,7 +12,7 @@ This document describes how to setup and maintain AA Cost Analysis automation on
 
 ---
 
-## 🚀 Initial Setup (One-time setup)
+## Initial Setup (One-time setup)
 
 ### Step 1: Create Directory
 
@@ -78,7 +78,7 @@ gsutil ls gs://active-active-cost-analysis/
 
 ---
 
-## ⏰ Cron Job Setup
+## Cron Job Setup
 
 ### Configure Automatic Execution
 
@@ -128,7 +128,7 @@ tail -f /opt/active-active-cost-analysis/logs/cron.log
 
 ---
 
-## 📂 File Structure
+## File Structure
 
 ```
 /opt/active-active-cost-analysis/
@@ -144,7 +144,7 @@ tail -f /opt/active-active-cost-analysis/logs/cron.log
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Wrapper Script Configuration
 
@@ -172,11 +172,11 @@ The script uses a shared virtual environment:
 - **Owner:** `EranCahana:ops`
 - **Contains:** `rcp_client`, `rcp_api_client`, `rcp_cli` and other RCP libraries
 
-⚠️ **Important:** The wrapper script automatically activates venv, no need to do it manually!
+**Important:** The wrapper script automatically activates venv, no need to do it manually!
 
 ---
 
-## 🔐 Security & Permissions
+## Security & Permissions
 
 ### Recommended Permissions
 
@@ -214,7 +214,7 @@ gsutil ls gs://active-active-cost-analysis/
 
 ---
 
-## 📊 Monitoring and Logs
+## Monitoring and Logs
 
 ### Log Files
 
@@ -263,7 +263,7 @@ LIMIT 5;
 
 ---
 
-## 🔄 Manual Execution
+## Manual Execution
 
 ### Test with Small Number of Clusters
 
@@ -295,7 +295,7 @@ ENABLE_GCS_UPLOAD=false sudo ./run_aa_report_with_creds.sh --limit 5
 
 ---
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### Problem: "Permission denied" on Execution
 
@@ -351,7 +351,7 @@ lsof /opt/active-active-cost-analysis/aa_report_cache.db
 
 ---
 
-## 🔄 Update Process
+## Update Process
 
 ### Updating Code
 
@@ -384,7 +384,7 @@ sudo nano /opt/active-active-cost-analysis/run_aa_report_with_creds.sh
 
 ---
 
-## 📞 Quick Reference
+## Quick Reference
 
 ### Important Paths
 
@@ -429,7 +429,7 @@ sqlite3 aa_report_cache.db "SELECT COUNT(*) FROM runs;"
 
 ---
 
-## ✅ New Setup Checklist
+## New Setup Checklist
 
 - [ ] Created directory `/opt/active-active-cost-analysis/`
 - [ ] Copied all files
