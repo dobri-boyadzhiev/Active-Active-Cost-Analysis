@@ -1078,13 +1078,15 @@ def api_savings_trend():
     trend.reverse()  # Oldest to newest
 
     labels = [t['timestamp'][:10] for t in trend]
-    data = [round(t['total_savings'], 2) for t in trend]
+    data = [round(t['total_savings'] * ADJUSTMENT_FACTOR, 2) for t in trend]
+    data_rcp = [round(t['total_savings'], 2) for t in trend]  # Original RCP values
     tickets = [t['jira_ticket'] for t in trend]
 
     db.close()
     return jsonify({
         'labels': labels,
         'data': data,
+        'data_rcp': data_rcp,
         'tickets': tickets
     })
 
@@ -1121,14 +1123,18 @@ def api_current_vs_optimal():
     ''', (run_id, limit)).fetchall()
 
     labels = [r['mc_uid'][:8] + '...' for r in results]
-    current = [round(r['current_price'], 2) for r in results]
-    optimal = [round(r['optimal_price'], 2) for r in results]
+    current = [round(r['current_price'] * ADJUSTMENT_FACTOR, 2) for r in results]
+    optimal = [round(r['optimal_price'] * ADJUSTMENT_FACTOR, 2) for r in results]
+    current_rcp = [round(r['current_price'], 2) for r in results]  # Original RCP values
+    optimal_rcp = [round(r['optimal_price'], 2) for r in results]  # Original RCP values
 
     db.close()
     return jsonify({
         'labels': labels,
         'current': current,
-        'optimal': optimal
+        'optimal': optimal,
+        'current_rcp': current_rcp,
+        'optimal_rcp': optimal_rcp
     })
 
 
@@ -1204,12 +1210,14 @@ def api_top_clusters():
             break
 
     labels = [r['mc_uid'][:12] + '...' for r in filtered_results]
-    data = [round(r['total_savings'], 2) for r in filtered_results]
+    data = [round(r['total_savings'] * ADJUSTMENT_FACTOR, 2) for r in filtered_results]
+    data_rcp = [round(r['total_savings'], 2) for r in filtered_results]  # Original RCP values
 
     db.close()
     return jsonify({
         'labels': labels,
-        'data': data
+        'data': data,
+        'data_rcp': data_rcp
     })
 
 
@@ -1307,13 +1315,15 @@ def api_cluster_age_distribution():
     # Prepare response
     age_ranges = list(age_buckets.keys())
     cluster_counts = [age_buckets[r]['count'] for r in age_ranges]
-    total_savings = [round(age_buckets[r]['savings'], 2) for r in age_ranges]
+    total_savings = [round(age_buckets[r]['savings'] * ADJUSTMENT_FACTOR, 2) for r in age_ranges]
+    total_savings_rcp = [round(age_buckets[r]['savings'], 2) for r in age_ranges]  # Original RCP values
 
     db.close()
     return jsonify({
         'age_ranges': age_ranges,
         'cluster_counts': cluster_counts,
-        'total_savings': total_savings
+        'total_savings': total_savings,
+        'total_savings_rcp': total_savings_rcp
     })
 
 
@@ -1433,10 +1443,10 @@ def api_multi_run_comparison():
 
         if stats and stats['total_current']:
             labels.append(f"Run #{run['run_id']}\n{run['run_timestamp'][:10]}")
-            current_cost_data.append(round(stats['total_current'], 2))
-            optimal_cost_data.append(round(stats['total_optimal'], 2))
-            savings_data.append(round(stats['total_savings'], 2))
-            avg_savings_data.append(round(stats['total_savings'] / stats['cluster_count'], 2) if stats['cluster_count'] > 0 else 0)
+            current_cost_data.append(round(stats['total_current'] * ADJUSTMENT_FACTOR, 2))
+            optimal_cost_data.append(round(stats['total_optimal'] * ADJUSTMENT_FACTOR, 2))
+            savings_data.append(round(stats['total_savings'] * ADJUSTMENT_FACTOR, 2))
+            avg_savings_data.append(round((stats['total_savings'] / stats['cluster_count']) * ADJUSTMENT_FACTOR, 2) if stats['cluster_count'] > 0 else 0)
 
     db.close()
     return jsonify({
@@ -1492,7 +1502,7 @@ def api_savings_velocity():
         if previous_savings is not None:
             delta = current_savings - previous_savings
             labels.append(f"Run #{run['run_id']}\n{run['run_timestamp'][:10]}")
-            velocity_data.append(round(delta, 2))
+            velocity_data.append(round(delta * ADJUSTMENT_FACTOR, 2))
             colors.append('rgba(75, 192, 192, 0.6)' if delta >= 0 else 'rgba(255, 99, 132, 0.6)')
 
         previous_savings = current_savings
@@ -1560,10 +1570,10 @@ def api_cloud_provider_comparison():
 
     for row in results:
         providers.append(row['cloud_provider'])
-        current_instance.append(round(row['current_instance'], 2))
-        current_storage.append(round(row['current_storage'], 2))
-        optimal_instance.append(round(row['optimal_instance'], 2))
-        optimal_storage.append(round(row['optimal_storage'], 2))
+        current_instance.append(round(row['current_instance'] * ADJUSTMENT_FACTOR, 2))
+        current_storage.append(round(row['current_storage'] * ADJUSTMENT_FACTOR, 2))
+        optimal_instance.append(round(row['optimal_instance'] * ADJUSTMENT_FACTOR, 2))
+        optimal_storage.append(round(row['optimal_storage'] * ADJUSTMENT_FACTOR, 2))
 
     db.close()
     return jsonify({

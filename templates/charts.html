@@ -604,6 +604,16 @@
 // Global variables
 let currentRunId = {{ latest_run.run_id if latest_run else 'null' }};
 let charts = {};
+const ADJUSTMENT_FACTOR = {{ ADJUSTMENT_FACTOR }};
+
+// Helper function to create tooltip with RCP blueprint value
+function createFinancialTooltip(adjustedValue, label = '') {
+    const rcpValue = adjustedValue / ADJUSTMENT_FACTOR;
+    return [
+        (label ? label + ': ' : '') + '$' + adjustedValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+        'RCP Blueprint: $' + rcpValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+    ];
+}
 
 // Initialize all charts on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -807,6 +817,19 @@ function loadMultiRunComparison() {
                         title: {
                             display: true,
                             text: 'Cost Trends Across Runs'
+                        },
+                        subtitle: {
+                            display: true,
+                            text: 'Values shown are adjusted (60% of RCP blueprint)',
+                            font: { size: 11, style: 'italic' },
+                            color: '#6c757d'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return createFinancialTooltip(context.parsed.y, context.dataset.label);
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -849,6 +872,19 @@ function loadSavingsVelocity() {
                         title: {
                             display: true,
                             text: 'Savings Change Between Runs'
+                        },
+                        subtitle: {
+                            display: true,
+                            text: 'Values shown are adjusted (60% of RCP blueprint)',
+                            font: { size: 11, style: 'italic' },
+                            color: '#6c757d'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return createFinancialTooltip(context.parsed.y, context.dataset.label);
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -919,6 +955,19 @@ function loadCloudProviderComparison(filters) {
                         title: {
                             display: true,
                             text: 'Cost Breakdown by Cloud Provider'
+                        },
+                        subtitle: {
+                            display: true,
+                            text: 'Values shown are adjusted (60% of RCP blueprint)',
+                            font: { size: 11, style: 'italic' },
+                            color: '#6c757d'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return createFinancialTooltip(context.parsed.y, context.dataset.label);
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -1365,6 +1414,19 @@ function loadCurrentVsOptimal(filters) {
                         title: {
                             display: true,
                             text: `Top ${topN} Clusters - Current vs Optimal Cost`
+                        },
+                        subtitle: {
+                            display: true,
+                            text: 'Values shown are adjusted (60% of RCP blueprint)',
+                            font: { size: 11, style: 'italic' },
+                            color: '#6c757d'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return createFinancialTooltip(context.parsed.y, context.dataset.label);
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -1470,6 +1532,19 @@ function loadTopClusters(filters) {
                         title: {
                             display: true,
                             text: `Top ${topN} Clusters by Savings`
+                        },
+                        subtitle: {
+                            display: true,
+                            text: 'Values shown are adjusted (60% of RCP blueprint)',
+                            font: { size: 11, style: 'italic' },
+                            color: '#6c757d'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return createFinancialTooltip(context.parsed.x, context.dataset.label);
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -1519,6 +1594,20 @@ function loadSavingsBreakdown(filters) {
                         title: {
                             display: true,
                             text: 'Savings Breakdown: Instance vs Storage'
+                        },
+                        subtitle: {
+                            display: true,
+                            text: 'Values shown are adjusted (60% of RCP blueprint)',
+                            font: { size: 11, style: 'italic' },
+                            color: '#6c757d'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    return createFinancialTooltip(context.parsed, label);
+                                }
+                            }
                         }
                     }
                 }
