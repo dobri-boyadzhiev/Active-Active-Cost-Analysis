@@ -45,6 +45,14 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
+# ============================================================================
+# CONSTANTS AND CONFIGURATION
+# ============================================================================
+
+# Adjustment factor for conservative financial estimates
+# RCP blueprint values are multiplied by this factor for display
+ADJUSTMENT_FACTOR = 0.6  # 40% reduction (shows 60% of original)
+
 # Database Path Configuration
 # For Cloud Run: uses GCS mounted volume
 # For local dev: uses current directory
@@ -96,13 +104,36 @@ logger.info(f"Path Prefix: {PATH_PREFIX if PATH_PREFIX else '(none)'}")
 
 
 # ============================================================================
+# JINJA2 FILTERS
+# ============================================================================
+
+@app.template_filter('adjusted')
+def adjusted_filter(value):
+    """Apply adjustment factor to financial value."""
+    if value is None:
+        return 0
+    return value * ADJUSTMENT_FACTOR
+
+@app.template_filter('format_currency')
+def format_currency_filter(value, decimals=2):
+    """Format value as currency with commas."""
+    if value is None:
+        return "$0.00"
+    format_str = "{:,.%df}" % decimals
+    return "$" + format_str.format(value)
+
+
+# ============================================================================
 # CONTEXT PROCESSORS
 # ============================================================================
 
 @app.context_processor
 def inject_path_prefix():
-    """Inject PATH_PREFIX into all templates."""
-    return {'PATH_PREFIX': PATH_PREFIX}
+    """Inject PATH_PREFIX and ADJUSTMENT_FACTOR into all templates."""
+    return {
+        'PATH_PREFIX': PATH_PREFIX,
+        'ADJUSTMENT_FACTOR': ADJUSTMENT_FACTOR
+    }
 
 
 # ============================================================================
@@ -274,9 +305,11 @@ def dashboard():
         # Build metrics dictionary
         metrics = {
             # Row 1: Financial Metrics
-            'monthly_savings': round(total_savings, 2),
+            'monthly_savings': round(total_savings * 0.6, 2),  # 40% reduction (60% of original)
+            'monthly_savings_rcp_blueprint': round(total_savings, 2),  # Original RCP blueprint value
             'savings_change_percent': round(savings_change_percent, 1),
-            'annual_roi': round(total_savings * 12, 2),
+            'annual_roi': round(total_savings * 12 * 0.6, 2),  # 40% reduction (60% of original)
+            'annual_roi_rcp_blueprint': round(total_savings * 12, 2),  # Original RCP blueprint value
             'savings_percent_of_spend': round((total_savings / total_current * 100) if total_current > 0 else 0, 1),
             'avg_savings_per_cluster': round(avg_savings, 2),
             'median_savings': round(median_savings, 2),
@@ -347,7 +380,8 @@ def dashboard():
         metrics['most_used_instance_avg_cost'] = round(most_used_avg_cost, 2)
 
         # 🆕 NEW METRICS: Total AA Spend
-        metrics['total_aa_spend'] = round(total_current, 2)
+        metrics['total_aa_spend'] = round(total_current * 0.6, 2)  # 40% reduction (60% of original)
+        metrics['total_aa_spend_rcp_blueprint'] = round(total_current, 2)  # Original RCP blueprint value
 
         # 🆕 NEW METRICS: Average Cluster Age
         age_data = db.conn.execute('''

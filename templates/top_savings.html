@@ -160,16 +160,23 @@
                                     <small class="text-muted">N/A</small>
                                     {% endif %}
                                 </td>
-                                <td class="text-end">${{ "{:,.2f}".format(cluster.current_price) }}</td>
-                                <td class="text-end">${{ "{:,.2f}".format(cluster.optimal_price) }}</td>
+                                <td class="text-end">
+                                    <strong>${{ "{:,.2f}".format(cluster.current_price | adjusted) }}</strong>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.current_price) }}</small>
+                                </td>
+                                <td class="text-end">
+                                    <strong>${{ "{:,.2f}".format(cluster.optimal_price | adjusted) }}</strong>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.optimal_price) }}</small>
+                                </td>
                                 <td class="text-end">
                                     {% if cluster.savings > 0 %}
-                                    <span class="text-danger fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                    <span class="text-danger fw-bold">${{ "{:,.2f}".format(cluster.savings | adjusted) }}</span>
                                     {% elif cluster.savings < 0 %}
-                                    <span class="text-success fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                    <span class="text-success fw-bold">${{ "{:,.2f}".format(cluster.savings | adjusted) }}</span>
                                     {% else %}
-                                    <span class="fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                    <span class="fw-bold">${{ "{:,.2f}".format(cluster.savings | adjusted) }}</span>
                                     {% endif %}
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.savings) }}</small>
                                 </td>
                                 <td class="text-end">
                                     {% if cluster.savings_percent > 0 %}
@@ -199,11 +206,20 @@
                                        data-bs-html="true"
                                        data-bs-content="<strong>Total Calculation:</strong><br>Sums <strong>only clusters with positive savings</strong> (optimization opportunities).<br><br><strong>Note:</strong> Clusters with negative or zero savings are shown in the table but excluded from the total, as they don't represent optimization opportunities."></i>
                                 </td>
-                                <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='current_price')) }}</td>
-                                <td class="text-end">${{ "{:,.2f}".format(opportunities | sum(attribute='optimal_price')) }}</td>
+                                <td class="text-end">
+                                    {% set total_current = opportunities | sum(attribute='current_price') %}
+                                    <strong>${{ "{:,.2f}".format(total_current | adjusted) }}</strong>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(total_current) }}</small>
+                                </td>
+                                <td class="text-end">
+                                    {% set total_optimal = opportunities | sum(attribute='optimal_price') %}
+                                    <strong>${{ "{:,.2f}".format(total_optimal | adjusted) }}</strong>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(total_optimal) }}</small>
+                                </td>
                                 <td class="text-end">
                                     {% set total_savings = opportunities | selectattr('savings', 'gt', 0) | sum(attribute='savings') %}
-                                    <span class="text-danger">${{ "{:,.2f}".format(total_savings) }}</span>
+                                    <span class="text-danger fw-bold">${{ "{:,.2f}".format(total_savings | adjusted) }}</span>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(total_savings) }}</small>
                                 </td>
                                 <td colspan="2"></td>
                             </tr>

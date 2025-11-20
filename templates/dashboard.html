@@ -45,14 +45,7 @@
                     </div>
                     <div class="metric-card-number text-danger">${{ "{:,.0f}".format(metrics.monthly_savings) }}</div>
                     <div class="metric-card-description text-muted">
-                        {% if metrics.savings_change_percent > 0 %}
-                        <i class="bi bi-arrow-up text-danger"></i> {{ "{:+.1f}".format(metrics.savings_change_percent) }}% worse
-                        {% elif metrics.savings_change_percent < 0 %}
-                        <i class="bi bi-arrow-down text-success"></i> {{ "{:.1f}".format(metrics.savings_change_percent) }}% better
-                        {% else %}
-                        <i class="bi bi-dash"></i> No change
-                        {% endif %}
-                        vs last run
+                        <i class="bi bi-file-earmark-code"></i> RCP blueprint: ${{ "{:,.0f}".format(metrics.monthly_savings_rcp_blueprint) }}
                     </div>
                 </div>
             </div>
@@ -72,7 +65,7 @@
                     </div>
                     <div class="metric-card-number text-primary">${{ "{:,.0f}".format(metrics.annual_roi) }}</div>
                     <div class="metric-card-description text-muted">
-                        <i class="bi bi-percent"></i> {{ "{:.1f}".format(metrics.savings_percent_of_spend) }}% of total AA spend
+                        <i class="bi bi-file-earmark-code"></i> RCP blueprint: ${{ "{:,.0f}".format(metrics.annual_roi_rcp_blueprint) }}
                     </div>
                 </div>
             </div>
@@ -92,7 +85,7 @@
                     </div>
                     <div class="metric-card-number text-dark">${{ "{:,.0f}".format(metrics.total_aa_spend) }}</div>
                     <div class="metric-card-description text-muted">
-                        <i class="bi bi-server"></i> {{ metrics.total_clusters }} total clusters
+                        <i class="bi bi-file-earmark-code"></i> RCP blueprint: ${{ "{:,.0f}".format(metrics.total_aa_spend_rcp_blueprint) }}
                     </div>
                 </div>
             </div>
@@ -277,16 +270,23 @@
                                     <small class="text-muted">N/A</small>
                                     {% endif %}
                                 </td>
-                                <td class="text-end">${{ "{:,.2f}".format(cluster.current_price) }}</td>
-                                <td class="text-end">${{ "{:,.2f}".format(cluster.optimal_price) }}</td>
+                                <td class="text-end">
+                                    <strong>${{ "{:,.2f}".format(cluster.current_price | adjusted) }}</strong>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.current_price) }}</small>
+                                </td>
+                                <td class="text-end">
+                                    <strong>${{ "{:,.2f}".format(cluster.optimal_price | adjusted) }}</strong>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.optimal_price) }}</small>
+                                </td>
                                 <td class="text-end">
                                     {% if cluster.savings > 0 %}
-                                    <span class="text-danger fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                    <span class="text-danger fw-bold">${{ "{:,.2f}".format(cluster.savings | adjusted) }}</span>
                                     {% elif cluster.savings < 0 %}
-                                    <span class="text-success fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                    <span class="text-success fw-bold">${{ "{:,.2f}".format(cluster.savings | adjusted) }}</span>
                                     {% else %}
-                                    <span class="fw-bold">${{ "{:,.2f}".format(cluster.savings) }}</span>
+                                    <span class="fw-bold">${{ "{:,.2f}".format(cluster.savings | adjusted) }}</span>
                                     {% endif %}
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.savings) }}</small>
                                 </td>
                                 <td class="text-end">
                                     {% if cluster.savings_percent > 0 %}

@@ -74,8 +74,11 @@
         <div class="card bg-warning text-dark">
             <div class="card-body text-center">
                 <h5><i class="bi bi-piggy-bank"></i> Monthly Savings</h5>
-                <h2><strong>${{ "{:,.2f}".format(latest_result.total_savings) }}</strong></h2>
-                <p class="mb-0">{{ "{:.1f}".format(latest_result.savings_percent) }}% reduction</p>
+                <h2><strong>${{ "{:,.2f}".format(latest_result.total_savings | adjusted) }}</strong></h2>
+                <p class="mb-0">
+                    {{ "{:.1f}".format(latest_result.savings_percent) }}% reduction
+                    <br><small>RCP Blueprint: ${{ "{:,.2f}".format(latest_result.total_savings) }}</small>
+                </p>
             </div>
         </div>
     </div>
@@ -83,8 +86,11 @@
         <div class="card bg-info text-white">
             <div class="card-body text-center">
                 <h5><i class="bi bi-calendar-check"></i> Annual Savings</h5>
-                <h2><strong>${{ "{:,.2f}".format(latest_result.total_savings * 12) }}</strong></h2>
-                <p class="mb-0">Projected yearly impact</p>
+                <h2><strong>${{ "{:,.2f}".format((latest_result.total_savings * 12) | adjusted) }}</strong></h2>
+                <p class="mb-0">
+                    Projected yearly impact
+                    <br><small>RCP Blueprint: ${{ "{:,.2f}".format(latest_result.total_savings * 12) }}</small>
+                </p>
             </div>
         </div>
     </div>
@@ -272,25 +278,35 @@
                 <table class="table table-sm">
                     <tr>
                         <td>Instance Cost:</td>
-                        <td class="text-end">${{ "{:,.2f}".format(cluster.instance_price) }}</td>
+                        <td class="text-end">
+                            <strong>${{ "{:,.2f}".format(cluster.instance_price | adjusted) }}</strong>
+                            <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.instance_price) }}</small>
+                        </td>
                     </tr>
                     <tr>
                         <td>Storage Cost:</td>
-                        <td class="text-end">${{ "{:,.2f}".format(cluster.storage_price) }}</td>
+                        <td class="text-end">
+                            <strong>${{ "{:,.2f}".format(cluster.storage_price | adjusted) }}</strong>
+                            <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.storage_price) }}</small>
+                        </td>
                     </tr>
                     <tr class="fw-bold">
                         <td>Total:</td>
-                        <td class="text-end text-danger">${{ "{:,.2f}".format(cluster.total_price) }}</td>
+                        <td class="text-end text-danger">
+                            <strong>${{ "{:,.2f}".format(cluster.total_price | adjusted) }}</strong>
+                            <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.total_price) }}</small>
+                        </td>
                     </tr>
                 </table>
-                
+
                 {% if not loop.last %}<hr>{% endif %}
                 {% endfor %}
-                
+
                 <!-- Total for all current clusters -->
                 {% set total_current = current_clusters | sum(attribute='total_price') %}
                 <div class="alert alert-danger mt-3">
-                    <strong>Total Current Cost: ${{ "{:,.2f}".format(total_current) }}</strong>
+                    <strong>Total Current Cost: ${{ "{:,.2f}".format(total_current | adjusted) }}</strong>
+                    <br><small class="text-muted">RCP Blueprint: ${{ "{:,.2f}".format(total_current) }}</small>
                 </div>
             </div>
         </div>
@@ -328,25 +344,35 @@
                 <table class="table table-sm">
                     <tr>
                         <td>Instance Cost:</td>
-                        <td class="text-end">${{ "{:,.2f}".format(cluster.instance_price) }}</td>
+                        <td class="text-end">
+                            <strong>${{ "{:,.2f}".format(cluster.instance_price | adjusted) }}</strong>
+                            <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.instance_price) }}</small>
+                        </td>
                     </tr>
                     <tr>
                         <td>Storage Cost:</td>
-                        <td class="text-end">${{ "{:,.2f}".format(cluster.storage_price) }}</td>
+                        <td class="text-end">
+                            <strong>${{ "{:,.2f}".format(cluster.storage_price | adjusted) }}</strong>
+                            <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.storage_price) }}</small>
+                        </td>
                     </tr>
                     <tr class="fw-bold">
                         <td>Total:</td>
-                        <td class="text-end text-success">${{ "{:,.2f}".format(cluster.total_price) }}</td>
+                        <td class="text-end text-success">
+                            <strong>${{ "{:,.2f}".format(cluster.total_price | adjusted) }}</strong>
+                            <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster.total_price) }}</small>
+                        </td>
                     </tr>
                 </table>
-                
+
                 {% if not loop.last %}<hr>{% endif %}
                 {% endfor %}
-                
+
                 <!-- Total for all optimal clusters -->
                 {% set total_optimal = optimal_clusters | sum(attribute='total_price') %}
                 <div class="alert alert-success mt-3">
-                    <strong>Total Optimal Cost: ${{ "{:,.2f}".format(total_optimal) }}</strong>
+                    <strong>Total Optimal Cost: ${{ "{:,.2f}".format(total_optimal | adjusted) }}</strong>
+                    <br><small class="text-muted">RCP Blueprint: ${{ "{:,.2f}".format(total_optimal) }}</small>
                 </div>
             </div>
         </div>
@@ -404,16 +430,19 @@
                                     {% set cluster_savings = current.total_price - optimal.total_price %}
                                     {% if cluster_savings > 0 %}
                                     <span class="badge bg-danger">
-                                        ${{ "{:,.2f}".format(cluster_savings) }}
+                                        ${{ "{:,.2f}".format(cluster_savings | adjusted) }}
                                     </span>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster_savings) }}</small>
                                     {% elif cluster_savings < 0 %}
                                     <span class="badge bg-success">
-                                        ${{ "{:,.2f}".format(cluster_savings) }}
+                                        ${{ "{:,.2f}".format(cluster_savings | adjusted) }}
                                     </span>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster_savings) }}</small>
                                     {% else %}
                                     <span class="badge bg-secondary">
-                                        ${{ "{:,.2f}".format(cluster_savings) }}
+                                        ${{ "{:,.2f}".format(cluster_savings | adjusted) }}
                                     </span>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(cluster_savings) }}</small>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -519,16 +548,23 @@
                             {% for record in history | reverse %}
                             <tr>
                                 <td>{{ record.timestamp[:10] }}</td>
-                                <td class="text-end">${{ "{:,.2f}".format(record.current_price) }}</td>
-                                <td class="text-end">${{ "{:,.2f}".format(record.optimal_price) }}</td>
+                                <td class="text-end">
+                                    <strong>${{ "{:,.2f}".format(record.current_price | adjusted) }}</strong>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(record.current_price) }}</small>
+                                </td>
+                                <td class="text-end">
+                                    <strong>${{ "{:,.2f}".format(record.optimal_price | adjusted) }}</strong>
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(record.optimal_price) }}</small>
+                                </td>
                                 <td class="text-end">
                                     {% if record.savings > 0 %}
-                                    <span class="text-danger fw-bold">${{ "{:,.2f}".format(record.savings) }}</span>
+                                    <span class="text-danger fw-bold">${{ "{:,.2f}".format(record.savings | adjusted) }}</span>
                                     {% elif record.savings < 0 %}
-                                    <span class="text-success fw-bold">${{ "{:,.2f}".format(record.savings) }}</span>
+                                    <span class="text-success fw-bold">${{ "{:,.2f}".format(record.savings | adjusted) }}</span>
                                     {% else %}
-                                    <span class="fw-bold">${{ "{:,.2f}".format(record.savings) }}</span>
+                                    <span class="fw-bold">${{ "{:,.2f}".format(record.savings | adjusted) }}</span>
                                     {% endif %}
+                                    <br><small class="text-muted">RCP: ${{ "{:,.2f}".format(record.savings) }}</small>
                                 </td>
                                 <td class="text-end">
                                     {% if record.savings_percent > 0 %}
